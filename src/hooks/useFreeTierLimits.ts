@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePremium } from './usePremium';
 
 export const FREE_JOURNEY_LIMIT = 1;
-export const FREE_COMPILATIONS_PER_MONTH = 3;
+export const FREE_COMPILATIONS_PER_MONTH = 1;
 
 export interface FreeTierUsage {
   journeyCount: number;
