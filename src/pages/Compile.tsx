@@ -122,6 +122,14 @@ const Compile: React.FC = () => {
         setIsSaved(true);
         toast.success('Saved to your Reels!');
         refreshLimits();
+        // For free users, after using their 1 compilation, show paywall
+        if (!isPremium) {
+          setTimeout(() => {
+            setShowResult(false);
+            cloudReset();
+            navigate('/paywall');
+          }, 1500);
+        }
       } else {
         toast.error('Failed to save. Please try again.');
       }
@@ -201,7 +209,9 @@ const Compile: React.FC = () => {
               onClick={() => navigate('/paywall')}
               className="mt-3 w-full text-xs text-left px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-primary"
             >
-              Free plan: {compilationsThisMonth}/{FREE_COMPILATIONS_PER_MONTH} compilations this month · Tap to upgrade
+              {compilationsThisMonth >= FREE_COMPILATIONS_PER_MONTH
+                ? `Free limit reached (${compilationsThisMonth}/${FREE_COMPILATIONS_PER_MONTH} this month) · Tap to upgrade for unlimited`
+                : `Free plan: ${compilationsThisMonth}/${FREE_COMPILATIONS_PER_MONTH} compilation this month · Tap to upgrade`}
             </button>
           )}
         </div>
