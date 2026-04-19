@@ -122,6 +122,14 @@ const Compile: React.FC = () => {
         setIsSaved(true);
         toast.success('Saved to your Reels!');
         refreshLimits();
+        // For free users, after using their 1 compilation, show paywall
+        if (!isPremium) {
+          setTimeout(() => {
+            setShowResult(false);
+            cloudReset();
+            navigate('/paywall');
+          }, 1500);
+        }
       } else {
         toast.error('Failed to save. Please try again.');
       }
