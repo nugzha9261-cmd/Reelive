@@ -15,7 +15,7 @@ const FEATURES = [
 
 const PLANS = [
   { id: 'monthly', label: 'Monthly', price: '$4.99', period: '/month', badge: null },
-  { id: 'yearly', label: 'Yearly', price: '$29.99', period: '/year', badge: 'Save 50%' },
+  { id: 'yearly', label: 'Yearly', price: '$39.99', period: '/year', badge: 'Save 33%' },
   { id: 'lifetime', label: 'Lifetime', price: '$79.99', period: 'one-time', badge: 'Best value' },
 ];
 

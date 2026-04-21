@@ -40,11 +40,12 @@ const Signup: React.FC = () => {
       return;
     }
 
-    const hasNumberOrSpecial = /[\d\W_]/.test(password);
-    if (!hasNumberOrSpecial) {
+    const hasUpper = /[A-Z]/.test(password);
+    const hasSpecial = /[\W_]/.test(password);
+    if (!hasUpper || !hasSpecial) {
       toast({
         title: 'Password too weak',
-        description: 'Include at least one number or special character.',
+        description: 'Include at least one uppercase letter and one special character.',
         variant: 'destructive',
       });
       return;
@@ -169,7 +170,11 @@ const Signup: React.FC = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-1 h-1 rounded-full bg-primary"></span>
-                    Include a number or special character
+                    At least one uppercase letter
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-primary"></span>
+                    At least one special character
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-1 h-1 rounded-full bg-primary"></span>
