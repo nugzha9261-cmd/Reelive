@@ -13,14 +13,14 @@ import { useJourneys } from '@/hooks/useJourneys';
 import { useCompileClips, TagFilter } from '@/hooks/useCompileClips';
 import { useCloudCompilation } from '@/hooks/useCloudCompilation';
 import { useCompilations } from '@/hooks/useCompilations';
-import { useFreeTierLimits, FREE_COMPILATIONS_PER_MONTH } from '@/hooks/useFreeTierLimits';
+import { useFreeTierLimits, FREE_JOURNEY_LIMIT, FREE_COMPILATION_LIMIT } from '@/hooks/useFreeTierLimits';
 import { Compilation } from '@/types/journey';
 import { toast } from 'sonner';
 
 const Compile: React.FC = () => {
   const navigate = useNavigate();
   const { journeys } = useJourneys();
-  const { canCreateCompilation, compilationsThisMonth, isPremium, refresh: refreshLimits } = useFreeTierLimits();
+  const { canCreateCompilation, compilationCount, isPremium, refresh: refreshLimits } = useFreeTierLimits();
   
   // Filter state
   const [selectedJourneyId, setSelectedJourneyId] = useState<string>('all');
@@ -65,7 +65,7 @@ const Compile: React.FC = () => {
     }
 
     if (!canCreateCompilation) {
-      toast.error(`Free plan: ${FREE_COMPILATIONS_PER_MONTH} compilations/month limit. Upgrade for unlimited.`);
+      toast.error(`Free trial: ${FREE_COMPILATION_LIMIT} compilation limit. Upgrade for unlimited.`);
       navigate('/paywall');
       return;
     }
@@ -209,9 +209,9 @@ const Compile: React.FC = () => {
               onClick={() => navigate('/paywall')}
               className="mt-3 w-full text-xs text-left px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 text-primary"
             >
-              {compilationsThisMonth >= FREE_COMPILATIONS_PER_MONTH
-                ? `Free limit reached (${compilationsThisMonth}/${FREE_COMPILATIONS_PER_MONTH} this month) · Tap to upgrade for unlimited`
-                : `Free plan: ${compilationsThisMonth}/${FREE_COMPILATIONS_PER_MONTH} compilation this month · Tap to upgrade`}
+              {compilationCount >= FREE_COMPILATION_LIMIT
+                ? `Free trial used (${compilationCount}/${FREE_COMPILATION_LIMIT}) · Tap to upgrade for unlimited`
+                : `Free trial: ${compilationCount}/${FREE_COMPILATION_LIMIT} compilation · Tap to upgrade`}
             </button>
           )}
         </div>
