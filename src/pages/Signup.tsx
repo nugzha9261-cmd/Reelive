@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { IOSButton } from '@/components/ui/ios-button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Film, Loader2 } from 'lucide-react';
+import { Film, Loader2, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { lovable } from '@/integrations/lovable';
 
@@ -146,7 +146,21 @@ const Signup: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            <div className="group relative">
+              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+              <div className="absolute right-0 bottom-full mb-2 w-64 p-3 bg-popover border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <p className="text-sm font-medium text-foreground mb-2">Password requirements:</p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li className="flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-primary"></span>
+                    At least 6 characters
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
           <Input
             id="password"
             type="password"
