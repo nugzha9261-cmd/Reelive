@@ -16,7 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import DraftsSection from '@/components/profile/DraftsSection';
 import { usePremium } from '@/hooks/usePremium';
-import { useFreeTierLimits, FREE_JOURNEY_LIMIT, FREE_COMPILATIONS_PER_MONTH } from '@/hooks/useFreeTierLimits';
+import { useFreeTierLimits, FREE_JOURNEY_LIMIT, FREE_COMPILATION_LIMIT } from '@/hooks/useFreeTierLimits';
 
 interface SettingItemProps {
   icon: React.ElementType;
@@ -66,7 +66,7 @@ const Profile: React.FC = () => {
   });
   const { user, signOut } = useAuth();
   const { isPremium } = usePremium();
-  const { journeyCount, compilationsThisMonth } = useFreeTierLimits();
+  const { journeyCount, compilationCount } = useFreeTierLimits();
 
   const handleDailyToggle = (checked: boolean) => {
     setDailyReminder(checked);
