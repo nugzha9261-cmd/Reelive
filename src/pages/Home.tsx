@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 import { MobileLayout } from '@/components/layout/MobileLayout';
 import { AppHeader } from '@/components/layout/AppHeader';
@@ -42,6 +42,25 @@ const Home: React.FC = () => {
             </button>
           }
         />
+
+        {/* Go Premium banner — always visible until purchased */}
+        {!isPremium && (
+          <button
+            onClick={() => navigate('/paywall')}
+            className="w-full bg-gradient-to-r from-primary to-primary/70 rounded-2xl p-4 mb-4 flex items-center gap-4 text-left active:scale-[0.99] transition-transform"
+          >
+            <div className="w-12 h-12 rounded-full bg-primary-foreground/20 flex items-center justify-center shrink-0">
+              <Crown className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-primary-foreground">Go Premium</p>
+              <p className="text-sm text-primary-foreground/80">Unlimited journeys & compilations</p>
+            </div>
+            <span className="text-xs font-semibold text-primary-foreground bg-primary-foreground/20 px-3 py-1 rounded-full">
+              Upgrade
+            </span>
+          </button>
+        )}
 
         {/* Daily reminder */}
         <div className="bg-gradient-to-r from-primary/10 to-accent rounded-2xl p-4 mb-6 flex items-center gap-4">
