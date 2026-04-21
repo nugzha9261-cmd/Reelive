@@ -65,7 +65,7 @@ const Compile: React.FC = () => {
     }
 
     if (!canCreateCompilation) {
-      toast.error(`Free plan: ${FREE_COMPILATIONS_PER_MONTH} compilations/month limit. Upgrade for unlimited.`);
+      toast.error(`Free trial: ${FREE_COMPILATION_LIMIT} compilation limit. Upgrade for unlimited.`);
       navigate('/paywall');
       return;
     }
