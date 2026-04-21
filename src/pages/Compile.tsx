@@ -13,7 +13,7 @@ import { useJourneys } from '@/hooks/useJourneys';
 import { useCompileClips, TagFilter } from '@/hooks/useCompileClips';
 import { useCloudCompilation } from '@/hooks/useCloudCompilation';
 import { useCompilations } from '@/hooks/useCompilations';
-import { useFreeTierLimits, FREE_COMPILATIONS_PER_MONTH } from '@/hooks/useFreeTierLimits';
+import { useFreeTierLimits, FREE_JOURNEY_LIMIT, FREE_COMPILATION_LIMIT } from '@/hooks/useFreeTierLimits';
 import { Compilation } from '@/types/journey';
 import { toast } from 'sonner';
 

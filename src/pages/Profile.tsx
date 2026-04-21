@@ -118,7 +118,7 @@ const Profile: React.FC = () => {
               <>
                 <p className="font-semibold text-primary-foreground">Go Premium</p>
                 <p className="text-sm text-primary-foreground/80">
-                  {journeyCount}/{FREE_JOURNEY_LIMIT} journey · {compilationsThisMonth}/{FREE_COMPILATIONS_PER_MONTH} reels this month
+                  {journeyCount}/{FREE_JOURNEY_LIMIT} journey · {compilationCount}/{FREE_COMPILATION_LIMIT} reels
                 </p>
               </>
             )}
