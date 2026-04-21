@@ -40,6 +40,16 @@ const Signup: React.FC = () => {
       return;
     }
 
+    const hasNumberOrSpecial = /[\d\W_]/.test(password);
+    if (!hasNumberOrSpecial) {
+      toast({
+        title: 'Password too weak',
+        description: 'Include at least one number or special character.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await signUp(email, password, displayName);
@@ -156,6 +166,14 @@ const Signup: React.FC = () => {
                   <li className="flex items-center gap-2">
                     <span className="w-1 h-1 rounded-full bg-primary"></span>
                     At least 6 characters
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-primary"></span>
+                    Include a number or special character
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1 h-1 rounded-full bg-primary"></span>
+                    Avoid common/leaked passwords
                   </li>
                 </ul>
               </div>
