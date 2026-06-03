@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Baby, Dumbbell, Heart, Plane, Target } from 'lucide-react';
-import { ArrowLeft, Camera, Star, Play, PlayCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, Camera, Star, Play, PlayCircle, Sparkles, Trash2 } from 'lucide-react';
 import { JourneyPhotoUpload } from '@/components/journey/JourneyPhotoUpload';
 import { JourneyType } from '@/types/journey';
 import { MobileLayout } from '@/components/layout/MobileLayout';
@@ -11,6 +11,16 @@ import { ClipActions } from '@/components/journey/ClipActions';
 import { ClipPreviewDialog } from '@/components/journey/ClipPreviewDialog';
 import { PlayAllViewer } from '@/components/journey/PlayAllViewer';
 import { IOSButton } from '@/components/ui/ios-button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useJourneys, useJourneyClips } from '@/hooks/useJourneys';
 import { cn, calculateDayNumber } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -26,12 +36,29 @@ type TabType = 'timeline' | 'weekly' | 'monthly';
 const JourneyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { journeys, updateJourney } = useJourneys();
+  const { journeys, updateJourney, deleteJourney } = useJourneys();
   const { clips, loading: clipsLoading, toggleHighlight, toggleBestOf, deleteClip, refetch } = useJourneyClips(id || '');
   const [activeTab, setActiveTab] = useState<TabType>('timeline');
   const [previewClip, setPreviewClip] = useState<VideoClip | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [playAllOpen, setPlayAllOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteJourney = async () => {
+    if (!id) return;
+    setDeleting(true);
+    const ok = await deleteJourney(id);
+    setDeleting(false);
+    if (ok) {
+      toast.success('Journey deleted');
+      setDeleteDialogOpen(false);
+      navigate('/home');
+    } else {
+      toast.error('Failed to delete journey');
+    }
+  };
+
 
   const handleDeleteClip = async (clipId: string) => {
     const success = await deleteClip(clipId);
