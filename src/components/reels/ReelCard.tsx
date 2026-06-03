@@ -118,14 +118,38 @@ export const ReelCard: React.FC<ReelCardProps> = ({
       <video
         ref={videoRef}
         src={compilation.videoUrl}
+        poster={compilation.thumbnailUrl || undefined}
         className="w-full h-full object-contain bg-background"
         loop
         playsInline
+        preload="auto"
         muted={isMuted}
         onClick={togglePlay}
+        onError={(e) => {
+          const v = e.currentTarget;
+          console.warn('Reel video failed to load:', compilation.videoUrl, v.error);
+          setLoadError(true);
+          setIsPlaying(false);
+        }}
+        onStalled={() => console.warn('Reel video stalled:', compilation.videoUrl)}
       />
 
-      {!isPlaying && isActive && (
+      {loadError && isActive && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60 px-6 text-center">
+          <p className="text-sm text-foreground mb-3">Couldn't load this reel.</p>
+          <button
+            onClick={() => {
+              setLoadError(false);
+              videoRef.current?.load();
+            }}
+            className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!isPlaying && isActive && !loadError && (
         <button
           onClick={togglePlay}
           className="absolute inset-0 flex items-center justify-center bg-background/20"
@@ -135,6 +159,7 @@ export const ReelCard: React.FC<ReelCardProps> = ({
           </div>
         </button>
       )}
+
 
       {isActive && (
         <button
