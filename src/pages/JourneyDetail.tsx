@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Baby, Dumbbell, Heart, Plane, Target } from 'lucide-react';
-import { ArrowLeft, Camera, Star, Play, PlayCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, Camera, Star, Play, PlayCircle, Sparkles, Trash2 } from 'lucide-react';
 import { JourneyPhotoUpload } from '@/components/journey/JourneyPhotoUpload';
 import { JourneyType } from '@/types/journey';
 import { MobileLayout } from '@/components/layout/MobileLayout';
@@ -11,6 +11,16 @@ import { ClipActions } from '@/components/journey/ClipActions';
 import { ClipPreviewDialog } from '@/components/journey/ClipPreviewDialog';
 import { PlayAllViewer } from '@/components/journey/PlayAllViewer';
 import { IOSButton } from '@/components/ui/ios-button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useJourneys, useJourneyClips } from '@/hooks/useJourneys';
 import { cn, calculateDayNumber } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -26,12 +36,29 @@ type TabType = 'timeline' | 'weekly' | 'monthly';
 const JourneyDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { journeys, updateJourney } = useJourneys();
+  const { journeys, updateJourney, deleteJourney } = useJourneys();
   const { clips, loading: clipsLoading, toggleHighlight, toggleBestOf, deleteClip, refetch } = useJourneyClips(id || '');
   const [activeTab, setActiveTab] = useState<TabType>('timeline');
   const [previewClip, setPreviewClip] = useState<VideoClip | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [playAllOpen, setPlayAllOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteJourney = async () => {
+    if (!id) return;
+    setDeleting(true);
+    const ok = await deleteJourney(id);
+    setDeleting(false);
+    if (ok) {
+      toast.success('Journey deleted');
+      setDeleteDialogOpen(false);
+      navigate('/home');
+    } else {
+      toast.error('Failed to delete journey');
+    }
+  };
+
 
   const handleDeleteClip = async (clipId: string) => {
     const success = await deleteClip(clipId);
@@ -154,7 +181,17 @@ const JourneyDetail: React.FC = () => {
             >
               <Camera className="w-5 h-5" />
             </IOSButton>
+            <IOSButton
+              variant="soft"
+              size="icon"
+              onClick={() => setDeleteDialogOpen(true)}
+              aria-label="Delete journey"
+              className="text-destructive"
+            >
+              <Trash2 className="w-5 h-5" />
+            </IOSButton>
           </div>
+
 
           {/* Tabs */}
           <div className="flex gap-2">
@@ -306,6 +343,39 @@ const JourneyDetail: React.FC = () => {
         journeyName={journey.name}
         getDayNumber={getDayNumber}
       />
+
+      {/* Delete Journey Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this journey?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                This will permanently delete <strong>{journey.name}</strong> and all{' '}
+                {journey.clipCount} of its video clips. This cannot be undone.
+              </span>
+              <span className="block text-destructive font-medium">
+                Make sure you've saved any compiled reels to your Reels section or
+                downloaded them to your device before continuing.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteJourney();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete Journey'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </>
   );
 };

@@ -93,7 +93,76 @@ export const useJourneys = () => {
 
   const refetch = () => queryClient.invalidateQueries({ queryKey: ['journeys', user?.id] });
 
-  return { journeys, loading, addJourney, updateJourney, refetch };
+  const extractStoragePath = (url: string | null | undefined): string | null => {
+    if (!url) return null;
+    const marker = '/videos/';
+    const idx = url.indexOf(marker);
+    if (idx === -1) return null;
+    return url.substring(idx + marker.length);
+  };
+
+  const deleteJourney = async (journeyId: string) => {
+    if (!user) return false;
+
+    // 1. Fetch all clips for this journey to get storage paths
+    const { data: clipsData, error: clipsErr } = await supabase
+      .from('video_clips')
+      .select('video_url, thumbnail_url')
+      .eq('journey_id', journeyId);
+
+    if (clipsErr) {
+      console.error('Error fetching clips for deletion:', clipsErr);
+      return false;
+    }
+
+    // 2. Remove files from storage
+    const paths: string[] = [];
+    (clipsData || []).forEach((c) => {
+      const v = extractStoragePath(c.video_url);
+      const t = extractStoragePath(c.thumbnail_url);
+      if (v) paths.push(v);
+      if (t && t !== v) paths.push(t);
+    });
+
+    if (paths.length > 0) {
+      const { error: storageErr } = await supabase.storage.from('videos').remove(paths);
+      if (storageErr) {
+        console.error('Error removing storage files:', storageErr);
+        // continue anyway — DB cleanup is more important
+      }
+    }
+
+    // 3. Delete video_clips rows
+    const { error: clipsDelErr } = await supabase
+      .from('video_clips')
+      .delete()
+      .eq('journey_id', journeyId);
+    if (clipsDelErr) {
+      console.error('Error deleting clips:', clipsDelErr);
+      return false;
+    }
+
+    // 4. Clean up compilation jobs tied to this journey
+    await supabase.from('compilation_jobs').delete().eq('journey_id', journeyId);
+
+    // 5. Delete the journey row
+    const { error: journeyErr } = await supabase
+      .from('journeys')
+      .delete()
+      .eq('id', journeyId);
+    if (journeyErr) {
+      console.error('Error deleting journey:', journeyErr);
+      return false;
+    }
+
+    queryClient.setQueryData(['journeys', user.id], (old: Journey[] = []) =>
+      old.filter((j) => j.id !== journeyId)
+    );
+    queryClient.invalidateQueries({ queryKey: ['journeys', user.id] });
+    return true;
+  };
+
+  return { journeys, loading, addJourney, updateJourney, deleteJourney, refetch };
 };
 
 export const useJourneyClips = (journeyId: string) => {
