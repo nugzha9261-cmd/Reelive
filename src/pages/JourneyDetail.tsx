@@ -343,6 +343,39 @@ const JourneyDetail: React.FC = () => {
         journeyName={journey.name}
         getDayNumber={getDayNumber}
       />
+
+      {/* Delete Journey Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this journey?</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                This will permanently delete <strong>{journey.name}</strong> and all{' '}
+                {journey.clipCount} of its video clips. This cannot be undone.
+              </span>
+              <span className="block text-destructive font-medium">
+                Make sure you've saved any compiled reels to your Reels section or
+                downloaded them to your device before continuing.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteJourney();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete Journey'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </>
   );
 };
