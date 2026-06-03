@@ -26,32 +26,65 @@ export const ReelCard: React.FC<ReelCardProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  // Always start muted to comply with mobile autoplay rules — user gesture required to bind audio
+  const [isMuted, setIsMuted] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     if (isActive) {
-      video.muted = false;
-      video.play().then(() => setIsPlaying(true)).catch(() => {
-        video.muted = true;
-        setIsMuted(true);
-        video.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-      });
+      // Reset error state and force a fresh load — handles stale element after app resume
+      setLoadError(false);
+      try {
+        // If the element didn't have a chance to load (e.g. after backgrounding), kick it
+        if (video.readyState === 0 || video.networkState === 3) {
+          video.load();
+        }
+      } catch (e) {
+        console.warn('video.load() failed:', e);
+      }
+
+      video.muted = true;
+      setIsMuted(true);
+
+      const tryPlay = () => {
+        video.play()
+          .then(() => setIsPlaying(true))
+          .catch((err) => {
+            console.warn('Reel autoplay failed:', err);
+            setIsPlaying(false);
+          });
+      };
+
+      if (video.readyState >= 2) {
+        tryPlay();
+      } else {
+        const onReady = () => {
+          video.removeEventListener('loadeddata', onReady);
+          tryPlay();
+        };
+        video.addEventListener('loadeddata', onReady);
+        return () => video.removeEventListener('loadeddata', onReady);
+      }
     } else {
-      video.pause();
-      video.currentTime = 0;
+      try {
+        video.pause();
+        video.currentTime = 0;
+      } catch {}
       setIsPlaying(false);
     }
-  }, [isActive]);
+  }, [isActive, compilation.videoUrl]);
 
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
-      video.play().then(() => setIsPlaying(true));
+      video.play().then(() => setIsPlaying(true)).catch((err) => {
+        console.warn('Manual play failed:', err);
+      });
     } else {
       video.pause();
       setIsPlaying(false);
@@ -65,7 +98,12 @@ export const ReelCard: React.FC<ReelCardProps> = ({
     const newMuted = !isMuted;
     video.muted = newMuted;
     setIsMuted(newMuted);
+    // Ensure playback continues after the user gesture (binds hardware volume)
+    if (video.paused) {
+      video.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
   };
+
 
   const formatDuration = (secs: number) => {
     const m = Math.floor(secs / 60);
