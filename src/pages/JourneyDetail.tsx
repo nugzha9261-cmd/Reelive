@@ -181,7 +181,17 @@ const JourneyDetail: React.FC = () => {
             >
               <Camera className="w-5 h-5" />
             </IOSButton>
+            <IOSButton
+              variant="soft"
+              size="icon"
+              onClick={() => setDeleteDialogOpen(true)}
+              aria-label="Delete journey"
+              className="text-destructive"
+            >
+              <Trash2 className="w-5 h-5" />
+            </IOSButton>
           </div>
+
 
           {/* Tabs */}
           <div className="flex gap-2">
