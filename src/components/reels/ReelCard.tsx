@@ -135,8 +135,11 @@ export const ReelCard: React.FC<ReelCardProps> = ({
       />
 
       {loadError && isActive && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/60 px-6 text-center">
-          <p className="text-sm text-foreground mb-3">Couldn't load this reel.</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 px-6 text-center">
+          <p className="text-base font-medium text-foreground mb-2">This reel is no longer available</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Older reels stored on our render provider expire after a short period. Please re-compile this reel to save a permanent copy.
+          </p>
           <button
             onClick={() => {
               setLoadError(false);
@@ -144,7 +147,7 @@ export const ReelCard: React.FC<ReelCardProps> = ({
             }}
             className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium"
           >
-            Retry
+            Try Again
           </button>
         </div>
       )}
