@@ -93,7 +93,7 @@ export const ReelCard: React.FC<ReelCardProps> = ({
       } catch {}
       setIsPlaying(false);
     }
-  }, [isActive, compilation.videoUrl]);
+  }, [isActive, playbackUrl]);
 
   const togglePlay = () => {
     const video = videoRef.current;
