@@ -11,6 +11,7 @@ import {
   shareToTikTok,
   downloadVideo,
 } from '@/lib/share';
+import { getLocalReelUri } from '@/lib/reel-cache';
 
 interface ReelCardProps {
   compilation: Compilation;
@@ -30,6 +31,22 @@ export const ReelCard: React.FC<ReelCardProps> = ({
   const [isMuted, setIsMuted] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  // Resolved playback URL: local cached file when available, otherwise the remote URL.
+  const [playbackUrl, setPlaybackUrl] = useState<string>(compilation.videoUrl);
+
+  // Resolve through on-device cache (instant + offline on native, no-op on web)
+  useEffect(() => {
+    let cancelled = false;
+    setPlaybackUrl(compilation.videoUrl);
+    getLocalReelUri(compilation.id, compilation.videoUrl)
+      .then((uri) => {
+        if (!cancelled && uri && uri !== compilation.videoUrl) setPlaybackUrl(uri);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [compilation.id, compilation.videoUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -117,7 +134,7 @@ export const ReelCard: React.FC<ReelCardProps> = ({
     <div className="relative w-full h-full bg-background snap-start snap-always flex-shrink-0">
       <video
         ref={videoRef}
-        src={compilation.videoUrl}
+        src={playbackUrl}
         poster={compilation.thumbnailUrl || undefined}
         className="w-full h-full object-contain bg-background"
         loop
