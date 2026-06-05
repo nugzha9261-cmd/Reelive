@@ -8,6 +8,7 @@ import { ReelCard } from '@/components/reels/ReelCard';
 import { useCompilations } from '@/hooks/useCompilations';
 import { Compilation } from '@/types/journey';
 import { toast } from 'sonner';
+import { deleteLocalReel } from '@/lib/reel-cache';
 
 const Reels: React.FC = () => {
   const navigate = useNavigate();
@@ -56,6 +57,8 @@ const Reels: React.FC = () => {
   const handleDelete = async (id: string) => {
     const ok = await deleteCompilation(id);
     if (ok) {
+      // Best-effort: drop on-device cached copy so storage isn't leaked
+      deleteLocalReel(id).catch(() => {});
       toast.success('Reel deleted');
     } else {
       toast.error('Failed to delete reel');

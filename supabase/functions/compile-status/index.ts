@@ -100,6 +100,33 @@ Deno.serve(async (req) => {
     if (shotstackStatus === 'done' && shotstackUrl) {
       newStatus = 'completed';
       resultUrl = shotstackUrl;
+
+      // Re-host the rendered mp4 in our own storage so the URL never expires.
+      // Shotstack output URLs are temporary and 403 after a short period.
+      try {
+        const mp4Res = await fetch(shotstackUrl);
+        if (!mp4Res.ok) throw new Error(`Shotstack download failed: ${mp4Res.status}`);
+        const mp4Bytes = new Uint8Array(await mp4Res.arrayBuffer());
+
+        const path = `${job.user_id}/${job.id}.mp4`;
+        const { error: uploadErr } = await supabase.storage
+          .from('compilations')
+          .upload(path, mp4Bytes, {
+            contentType: 'video/mp4',
+            upsert: true,
+          });
+
+        if (uploadErr) throw uploadErr;
+
+        const { data: pub } = supabase.storage.from('compilations').getPublicUrl(path);
+        if (pub?.publicUrl) {
+          resultUrl = pub.publicUrl;
+          console.log(`[compile-status] Rehosted reel to ${resultUrl}`);
+        }
+      } catch (rehostErr) {
+        console.error('[compile-status] Rehost failed, falling back to Shotstack URL:', rehostErr);
+        // resultUrl stays as shotstackUrl
+      }
     } else if (shotstackStatus === 'failed') {
       newStatus = 'failed';
       errorMessage = renderData?.response?.error || 'Render failed on cloud';
