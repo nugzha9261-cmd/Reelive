@@ -143,18 +143,9 @@ export const useCompilations = () => {
     if (!user) return null;
 
     try {
-      // Re-host the rendered video in our own storage so the URL never expires.
-      // Shotstack stage/production output URLs are temporary and will 403 after a short period.
-      let permanentUrl = params.videoUrl;
-      try {
-        const res = await fetch(params.videoUrl);
-        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-        const blob = await res.blob();
-        permanentUrl = await uploadVideo(blob, user.id);
-      } catch (rehostErr) {
-        console.error('[saveCompilationFromUrl] Re-hosting failed, falling back to remote URL:', rehostErr);
-        // Fall back to remote URL so the user still gets something saved, but warn in console.
-      }
+      // The compile-status edge function already rehosts Shotstack output into
+      // our own storage, so the URL we receive here is permanent.
+      const permanentUrl = params.videoUrl;
 
       const { data, error } = await supabase
         .from('compilations')
@@ -163,6 +154,7 @@ export const useCompilations = () => {
           title: params.title,
           description: params.description || null,
           video_url: permanentUrl,
+
           duration: params.duration,
           clip_count: params.clipCount,
           clip_ids: params.clipIds,
