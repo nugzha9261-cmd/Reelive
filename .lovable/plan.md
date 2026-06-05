@@ -1,31 +1,35 @@
-## Add Delete Journey Feature
+# Hybrid Reel Storage Plan
 
-Add a delete option inside the Journey detail page that removes the journey along with all its clips and storage files, with a clear warning so users save their compiled reels first.
+Goal: reels are watchable anytime, anywhere, even offline — without runaway cloud cost.
 
-### UI changes (Journey detail page)
+## How it works
 
-- Add a "Delete Journey" option in the header menu (three-dot/overflow menu next to existing actions). Red/destructive styling.
-- Tapping it opens a confirmation dialog (AlertDialog) with:
-  - Title: "Delete this journey?"
-  - Warning body: "This will permanently delete the journey and all its video clips. This cannot be undone. Make sure you've saved any compiled reels to your Reels section or downloaded them to your device before continuing."
-  - Buttons: "Cancel" and "Delete Journey" (destructive).
-- Show a loading state while deletion runs; on success, toast "Journey deleted" and navigate back to Home.
+1. **Server rehost (permanent cloud copy)** — when Shotstack finishes, the `compile-status` edge function downloads the rendered mp4 and uploads it to the `compilations` storage bucket. The DB stores the permanent Cloud URL, not the expiring Shotstack URL.
+2. **Device cache (instant + offline)** — the first time a reel plays on a device, the app downloads the mp4 to the device's app storage via `@capacitor/filesystem`. Future plays load from disk instantly with zero egress cost.
+3. **Fallback** — if the local file is missing (new device, reinstall, cleared cache), the app streams from the Cloud URL and re-caches it.
 
-### Deletion logic (extend `useJourneys` hook)
+## Changes
 
-Add `deleteJourney(journeyId)` that:
-1. Fetches all `video_clips` for the journey (to get `video_url` + `thumbnail_url` storage paths).
-2. Removes those files from the `videos` storage bucket in batch.
-3. Deletes rows from `video_clips` (will also decrement counts via existing trigger).
-4. Deletes related `compilation_jobs` rows for this journey (clean up pending jobs).
-5. Deletes the `journeys` row.
-6. Invalidates journey/clip queries.
+### Backend
+- **`supabase/functions/compile-status/index.ts`**: when Shotstack reports `done`, fetch the mp4, upload to `compilations/{user_id}/{jobId}.mp4` with service role, set `result_url` to the permanent public URL. Keep Shotstack URL as fallback only if rehost fails.
 
-Note: existing `compilations` (saved reels) remain untouched so users keep their saved videos — this is why the warning tells them to save the compile first.
+### Client
+- **`src/hooks/useCompilations.ts`**: remove the client-side rehost added last turn (server handles it now). `saveCompilationFromUrl` just stores the URL it receives.
+- **New `src/lib/reel-cache.ts`**: small helper around `@capacitor/filesystem`:
+  - `getLocalReelUri(compilationId, remoteUrl)` — returns local file URI if cached, otherwise downloads, saves to `Directory.Data/reels/{id}.mp4`, returns the new local URI. On web, returns `remoteUrl` unchanged.
+  - `deleteLocalReel(compilationId)` — called on reel delete.
+  - `getCacheSize()` / `clearCache()` — for a future Profile setting.
+- **`src/components/reels/ReelCard.tsx`**: resolve `compilation.videoUrl` through `getLocalReelUri()` before passing to `<video src>`. Keep current error overlay for legacy broken reels.
+- **`src/pages/Reels.tsx`** (and any other place reels play): same resolver.
 
-### Files to modify
+### Existing broken reels
+Legacy reels saved before the rehost fix still point at expired Shotstack URLs and cannot be recovered (source mp4 is gone). They keep showing the "no longer available — re-compile" message already in `ReelCard.tsx`.
 
-- `src/hooks/useJourneys.ts` — add `deleteJourney` mutation.
-- `src/pages/Journey.tsx` (or the journey detail page component) — add menu item + AlertDialog + handler.
+## Cost impact
+- Each reel: one upload + one download per device, ever. ~5–15 MB per reel.
+- 1,000 reels stored ≈ $0.02/month storage. Egress charged once per device per reel instead of every play.
 
-No database migration needed (RLS DELETE policies already exist for journeys, video_clips, compilation_jobs, and storage bucket).
+## Out of scope
+- No cache size cap UI yet (can add later in Profile).
+- No background pre-download of other users' reels (only the playing one is cached).
+- No migration for already-broken reels.
