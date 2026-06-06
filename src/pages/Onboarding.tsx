@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { Sparkles, Camera, Film } from 'lucide-react';
 import { IOSButton } from '@/components/ui/ios-button';
 import onboardingBg from '@/assets/onboarding-bg.jpg';
+import relivLogo from '@/assets/reliv-logo.png.asset.json';
 import { cn } from '@/lib/utils';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -117,9 +118,11 @@ const Onboarding: React.FC = () => {
                 return (
                   <div key={index} className="min-w-0 shrink-0 grow-0 basis-full">
                     <div className="flex flex-col items-center justify-center text-center px-2">
-                      <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                        <Icon className="w-10 h-10 text-primary" />
-                      </div>
+                      <img
+                        src={relivLogo.url}
+                        alt="Reliv"
+                        className="w-28 h-28 object-contain mb-6"
+                      />
                       <h1 className="text-[26px] leading-tight font-bold text-foreground mb-4 max-w-xs">
                         {slide.headline}
                       </h1>
