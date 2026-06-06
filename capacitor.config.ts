@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.journeyclips.app',
-  appName: 'Journey Clips',
+  appId: 'com.reliv.app',
+  appName: 'Reliv',
   webDir: 'dist',
   ios: {
     // iOS-specific settings for camera access
