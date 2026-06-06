@@ -49,7 +49,7 @@ const Paywall: React.FC = () => {
 
   return (
     <MobileLayout noPadding>
-      <div className="relative min-h-screen bg-gradient-to-b from-primary/10 via-background to-background">
+      <div className="relative min-h-screen bg-background">
         {/* Close */}
         <button
           onClick={handleClose}
@@ -61,11 +61,11 @@ const Paywall: React.FC = () => {
 
         {/* Hero */}
         <div className="pt-20 pb-8 px-6 text-center">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-gradient-to-br from-primary to-chart-4 flex items-center justify-center shadow-lg">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-3xl bg-primary flex items-center justify-center shadow-lg">
             <Crown className="w-10 h-10 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Go Premium</h1>
-          <p className="text-muted-foreground">Unlock the full LifeShots experience</p>
+          <p className="text-muted-foreground">Unlock the full Reliv experience</p>
         </div>
 
         {/* Features */}
@@ -117,7 +117,7 @@ const Paywall: React.FC = () => {
         <div className="px-6 pb-12">
           <button
             onClick={handlePurchase}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-chart-4 text-primary-foreground font-semibold shadow-lg active:scale-[0.98] transition-transform"
+            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-lg active:scale-[0.98] transition-transform"
           >
             Continue
           </button>
