@@ -12,33 +12,34 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 60 4% 95%;
-    --foreground: 24 9% 10%;
+    /* Reliv — Warm Sunset Palette */
+    --background: 40 55% 96%;
+    --foreground: 25 45% 16%;
 
-    --card: 60 9% 97%;
-    --card-foreground: 24 9% 10%;
+    --card: 40 60% 98%;
+    --card-foreground: 25 45% 16%;
 
-    --popover: 20 5% 90%;
-    --popover-foreground: 24 9% 10%;
+    --popover: 40 60% 98%;
+    --popover-foreground: 25 45% 16%;
 
-    --primary: 37 92% 50%;
-    --primary-foreground: 47 100% 96%;
+    --primary: 30 95% 55%;
+    --primary-foreground: 40 60% 98%;
 
-    --secondary: 24 5% 44%;
-    --secondary-foreground: 60 9% 97%;
+    --secondary: 35 50% 90%;
+    --secondary-foreground: 25 45% 18%;
 
-    --muted: 23 5% 82%;
-    --muted-foreground: 24 9% 10%;
+    --muted: 35 35% 90%;
+    --muted-foreground: 25 25% 35%;
 
-    --accent: 47 100% 96%;
-    --accent-foreground: 37 92% 50%;
+    --accent: 25 45% 22%;
+    --accent-foreground: 40 60% 98%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 85% 97%;
 
-    --border: 23 5% 82%;
-    --input: 23 5% 82%;
-    --ring: 37 92% 50%;
+    --border: 30 30% 86%;
+    --input: 30 30% 86%;
+    --ring: 30 95% 55%;
 
     --radius: 1rem;
 
