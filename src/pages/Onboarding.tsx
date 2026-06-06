@@ -114,7 +114,6 @@ const Onboarding: React.FC = () => {
           <div ref={emblaRef} className="overflow-hidden w-full">
             <div className="flex">
               {slides.map((slide, index) => {
-                const Icon = slide.icon;
                 return (
                   <div key={index} className="min-w-0 shrink-0 grow-0 basis-full">
                     <div className="flex flex-col items-center justify-center text-center px-2">
