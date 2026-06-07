@@ -51,8 +51,8 @@ const journeyTypes = [
     icon: Target, 
     label: 'Custom Goal', 
     description: 'Your own journey',
-    color: 'bg-secondary/10 text-secondary border-secondary/20',
-    activeColor: 'bg-secondary text-secondary-foreground border-secondary',
+    color: 'bg-accent/10 text-accent border-accent/20',
+    activeColor: 'bg-accent text-accent-foreground border-accent',
   },
 ];
 
