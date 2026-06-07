@@ -63,7 +63,7 @@ const Home: React.FC = () => {
         )}
 
         {/* Daily reminder */}
-        <div className="bg-gradient-to-r from-primary/10 to-accent rounded-2xl p-4 mb-6 flex items-center gap-4">
+        <div className="bg-secondary rounded-2xl p-4 mb-6 flex items-center gap-4 border border-border">
           <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
             <Sparkles className="w-6 h-6 text-primary" />
           </div>
