@@ -330,13 +330,19 @@ export const useVideoRecording = ({
       video.playbackRate = speedFactor;
       await video.play();
 
-      // Draw frames at ~30fps until video ends
+      // Draw frames at ~30fps until video ends, applying rotation locked at capture time
+      const rad = (angle * Math.PI) / 180;
       const drawFrame = () => {
         if (video.ended || video.paused) {
           recorder.stop();
           return;
         }
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.filter = filterCss || 'none';
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        if (rad) ctx.rotate(rad);
+        ctx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
+        ctx.restore();
         requestAnimationFrame(drawFrame);
       };
       requestAnimationFrame(drawFrame);
