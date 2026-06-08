@@ -49,6 +49,26 @@ export const useVideoRecording = ({
   const isSavingRef = useRef(false);
   const streamRef = useRef<MediaStream | null>(null);
   const facingModeRef = useRef<'environment' | 'user'>('environment');
+  const captureOrientationRef = useRef<0 | 90 | 180 | -90>(0);
+
+  // Read device orientation at this moment. Normalized to one of 0 | 90 | 180 | -90.
+  // We use this to rotate recorded frames so upside-down / landscape captures end up upright,
+  // mirroring native camera app behavior (orientation is locked when recording starts).
+  const getDeviceOrientation = (): 0 | 90 | 180 | -90 => {
+    try {
+      const a =
+        (typeof window !== 'undefined' && window.screen?.orientation?.angle) ??
+        (typeof window !== 'undefined' ? (window as any).orientation : 0) ??
+        0;
+      const n = ((a % 360) + 360) % 360;
+      if (n === 90) return 90;
+      if (n === 180) return 180;
+      if (n === 270) return -90;
+      return 0;
+    } catch {
+      return 0;
+    }
+  };
 
   // Derive: only "recorded" when we actually have a blob ready.
   const hasRecorded = recordedBlob !== null;

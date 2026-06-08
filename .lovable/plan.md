@@ -1,35 +1,44 @@
-# Hybrid Reel Storage Plan
+## Problem
 
-Goal: reels are watchable anytime, anywhere, even offline — without runaway cloud cost.
+When the user holds the phone upside down (or in landscape) and records, the saved clip stays in the raw sensor orientation. Native camera apps rotate the frame using the device's accelerometer so the final video always appears upright. Our recorder captures pixels directly from `MediaRecorder` → re-encodes through a canvas in `speedUpBlob`, and we never apply any rotation, so upside-down clips stay upside down.
 
-## How it works
+## Fix
 
-1. **Server rehost (permanent cloud copy)** — when Shotstack finishes, the `compile-status` edge function downloads the rendered mp4 and uploads it to the `compilations` storage bucket. The DB stores the permanent Cloud URL, not the expiring Shotstack URL.
-2. **Device cache (instant + offline)** — the first time a reel plays on a device, the app downloads the mp4 to the device's app storage via `@capacitor/filesystem`. Future plays load from disk instantly with zero egress cost.
-3. **Fallback** — if the local file is missing (new device, reinstall, cleared cache), the app streams from the Cloud URL and re-caches it.
+Capture the device orientation at the moment recording **starts** (this is how iOS/Android camera apps decide final video orientation — locked at capture, not at playback), then bake that rotation into the canvas pass that already runs in `speedUpBlob`. No extra encoding pass, no native plugin needed.
 
-## Changes
+### Changes in `src/hooks/useVideoRecording.ts`
 
-### Backend
-- **`supabase/functions/compile-status/index.ts`**: when Shotstack reports `done`, fetch the mp4, upload to `compilations/{user_id}/{jobId}.mp4` with service role, set `result_url` to the permanent public URL. Keep Shotstack URL as fallback only if rehost fails.
+1. **Track orientation**
+   - Add `captureOrientationRef = useRef<0 | 90 | 180 | -90>(0)`.
+   - Helper `getDeviceOrientation()` reads `window.screen.orientation?.angle` (modern) with fallback to `window.orientation` (older iOS). Normalize to one of `0 | 90 | 180 | -90`.
 
-### Client
-- **`src/hooks/useCompilations.ts`**: remove the client-side rehost added last turn (server handles it now). `saveCompilationFromUrl` just stores the URL it receives.
-- **New `src/lib/reel-cache.ts`**: small helper around `@capacitor/filesystem`:
-  - `getLocalReelUri(compilationId, remoteUrl)` — returns local file URI if cached, otherwise downloads, saves to `Directory.Data/reels/{id}.mp4`, returns the new local URI. On web, returns `remoteUrl` unchanged.
-  - `deleteLocalReel(compilationId)` — called on reel delete.
-  - `getCacheSize()` / `clearCache()` — for a future Profile setting.
-- **`src/components/reels/ReelCard.tsx`**: resolve `compilation.videoUrl` through `getLocalReelUri()` before passing to `<video src>`. Keep current error overlay for legacy broken reels.
-- **`src/pages/Reels.tsx`** (and any other place reels play): same resolver.
+2. **Lock orientation at `startRecording`**
+   - Set `captureOrientationRef.current = getDeviceOrientation()` right before `mediaRecorder.start(...)`. This matches native camera behavior (orientation frozen when the user taps record).
 
-### Existing broken reels
-Legacy reels saved before the rehost fix still point at expired Shotstack URLs and cannot be recovered (source mp4 is gone). They keep showing the "no longer available — re-compile" message already in `ReelCard.tsx`.
+3. **Apply rotation in `speedUpBlob`**
+   - After `await video.onloadedmetadata`, read `vw = video.videoWidth`, `vh = video.videoHeight`, and `angle = captureOrientationRef.current`.
+   - Size the canvas: for `±90°` swap width/height (`canvas.width = vh; canvas.height = vw`); for `0°` and `180°` use `vw × vh`.
+   - In the `drawFrame` loop, wrap the draw with:
+     ```ts
+     ctx.save();
+     ctx.translate(canvas.width / 2, canvas.height / 2);
+     ctx.rotate((angle * Math.PI) / 180);
+     ctx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
+     ctx.restore();
+     ```
+   - Keep `ctx.filter` exactly as today (set once before the loop is fine, but since we now `save/restore` per frame, set `ctx.filter` inside the save block or just before — preserves current filter-baking behavior).
 
-## Cost impact
-- Each reel: one upload + one download per device, ever. ~5–15 MB per reel.
-- 1,000 reels stored ≈ $0.02/month storage. Egress charged once per device per reel instead of every play.
+4. **Pass-through for `rebakeWithFilter`**
+   - No change needed — it calls `speedUpBlob`, which now reads `captureOrientationRef`. The orientation captured at record time stays valid through retakes/filter rebakes (we don't reset it on retake; next `startRecording` overwrites it).
+
+### Notes / edge cases
+
+- **Front camera mirroring** is unrelated and not changed here — that's a horizontal flip preference, not orientation.
+- **Live preview** (`<video>` showing the camera feed) is not rotated — the browser/OS already orients the preview correctly via CSS/viewport. Only the *encoded* output needs rotation.
+- **Capacitor WebView on iOS**: `screen.orientation.angle` is supported; `window.orientation` is the fallback for older iOS WebViews. Both are read at capture time so we don't depend on listeners.
+- No DB, types, or UI changes. Single file touched: `src/hooks/useVideoRecording.ts`.
 
 ## Out of scope
-- No cache size cap UI yet (can add later in Profile).
-- No background pre-download of other users' reels (only the playing one is cached).
-- No migration for already-broken reels.
+
+- Mid-recording rotation (native apps also lock at start).
+- Writing rotation metadata into the container — we physically rotate pixels, which is simpler and works everywhere including Shotstack downstream.
