@@ -49,6 +49,26 @@ export const useVideoRecording = ({
   const isSavingRef = useRef(false);
   const streamRef = useRef<MediaStream | null>(null);
   const facingModeRef = useRef<'environment' | 'user'>('environment');
+  const captureOrientationRef = useRef<0 | 90 | 180 | -90>(0);
+
+  // Read device orientation at this moment. Normalized to one of 0 | 90 | 180 | -90.
+  // We use this to rotate recorded frames so upside-down / landscape captures end up upright,
+  // mirroring native camera app behavior (orientation is locked when recording starts).
+  const getDeviceOrientation = (): 0 | 90 | 180 | -90 => {
+    try {
+      const a =
+        (typeof window !== 'undefined' && window.screen?.orientation?.angle) ??
+        (typeof window !== 'undefined' ? (window as any).orientation : 0) ??
+        0;
+      const n = ((a % 360) + 360) % 360;
+      if (n === 90) return 90;
+      if (n === 180) return 180;
+      if (n === 270) return -90;
+      return 0;
+    } catch {
+      return 0;
+    }
+  };
 
   // Derive: only "recorded" when we actually have a blob ready.
   const hasRecorded = recordedBlob !== null;
@@ -229,6 +249,8 @@ export const useVideoRecording = ({
       };
 
       mediaRecorderRef.current = mediaRecorder;
+      // Lock device orientation at the moment recording starts (matches native camera apps)
+      captureOrientationRef.current = getDeviceOrientation();
       mediaRecorder.start(100); // Collect data every 100ms
       setIsRecording(true);
 
@@ -269,9 +291,13 @@ export const useVideoRecording = ({
         setTimeout(() => reject(new Error('Video load timeout')), 5000);
       });
 
+      const angle = captureOrientationRef.current;
+      const vw = video.videoWidth || 1080;
+      const vh = video.videoHeight || 1920;
+      const swap = angle === 90 || angle === -90;
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 1080;
-      canvas.height = video.videoHeight || 1920;
+      canvas.width = swap ? vh : vw;
+      canvas.height = swap ? vw : vh;
       const ctx = canvas.getContext('2d')!;
       // Bake filter into every drawn frame — costs nothing extra vs unfiltered
       ctx.filter = filterCss || 'none';
@@ -304,13 +330,19 @@ export const useVideoRecording = ({
       video.playbackRate = speedFactor;
       await video.play();
 
-      // Draw frames at ~30fps until video ends
+      // Draw frames at ~30fps until video ends, applying rotation locked at capture time
+      const rad = (angle * Math.PI) / 180;
       const drawFrame = () => {
         if (video.ended || video.paused) {
           recorder.stop();
           return;
         }
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.filter = filterCss || 'none';
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        if (rad) ctx.rotate(rad);
+        ctx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
+        ctx.restore();
         requestAnimationFrame(drawFrame);
       };
       requestAnimationFrame(drawFrame);
