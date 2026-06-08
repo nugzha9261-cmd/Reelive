@@ -291,9 +291,13 @@ export const useVideoRecording = ({
         setTimeout(() => reject(new Error('Video load timeout')), 5000);
       });
 
+      const angle = captureOrientationRef.current;
+      const vw = video.videoWidth || 1080;
+      const vh = video.videoHeight || 1920;
+      const swap = angle === 90 || angle === -90;
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 1080;
-      canvas.height = video.videoHeight || 1920;
+      canvas.width = swap ? vh : vw;
+      canvas.height = swap ? vw : vh;
       const ctx = canvas.getContext('2d')!;
       // Bake filter into every drawn frame — costs nothing extra vs unfiltered
       ctx.filter = filterCss || 'none';
