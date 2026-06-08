@@ -249,6 +249,8 @@ export const useVideoRecording = ({
       };
 
       mediaRecorderRef.current = mediaRecorder;
+      // Lock device orientation at the moment recording starts (matches native camera apps)
+      captureOrientationRef.current = getDeviceOrientation();
       mediaRecorder.start(100); // Collect data every 100ms
       setIsRecording(true);
 
