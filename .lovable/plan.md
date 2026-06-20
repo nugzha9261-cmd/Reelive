@@ -1,44 +1,33 @@
-## Problem
+## Rebrand: Reliv → REELIVE
 
-When the user holds the phone upside down (or in landscape) and records, the saved clip stays in the raw sensor orientation. Native camera apps rotate the frame using the device's accelerometer so the final video always appears upright. Our recorder captures pixels directly from `MediaRecorder` → re-encodes through a canvas in `speedUpBlob`, and we never apply any rotation, so upside-down clips stay upside down.
+The user wants to rebrand the app to **REELIVE** using the new logo they uploaded. Colors and Capacitor bundle ID stay as-is.
 
-## Fix
+### Changes
 
-Capture the device orientation at the moment recording **starts** (this is how iOS/Android camera apps decide final video orientation — locked at capture, not at playback), then bake that rotation into the canvas pass that already runs in `speedUpBlob`. No extra encoding pass, no native plugin needed.
+1. **Register new logo as Lovable Asset**
+   - Use the uploaded `ChatGPT_Image_Jun_20_2026_at_08_04_16_AM.png`.
+   - Run `lovable-assets create` to generate a CDN-hosted `.asset.json` pointer (e.g., `src/assets/reelive-logo.png.asset.json`).
 
-### Changes in `src/hooks/useVideoRecording.ts`
+2. **Replace logo in Onboarding screen**
+   - `src/pages/Onboarding.tsx`: swap the `reliv-logo.png.asset.json` import for the new logo asset.
+   - Update `alt="Reliv"` → `alt="REELIVE"`.
 
-1. **Track orientation**
-   - Add `captureOrientationRef = useRef<0 | 90 | 180 | -90>(0)`.
-   - Helper `getDeviceOrientation()` reads `window.screen.orientation?.angle` (modern) with fallback to `window.orientation` (older iOS). Normalize to one of `0 | 90 | 180 | -90`.
+3. **Update `index.html` metadata**
+   - `<title>`: "Reliv — Relive your everyday moments" → "REELIVE — Relive your everyday moments"
+   - `<meta name="description">`, `<meta name="author">`: Reliv → REELIVE
+   - Open Graph `og:title` and `og:description`: Reliv → REELIVE
 
-2. **Lock orientation at `startRecording`**
-   - Set `captureOrientationRef.current = getDeviceOrientation()` right before `mediaRecorder.start(...)`. This matches native camera behavior (orientation frozen when the user taps record).
+4. **Update in-app brand name references**
+   - `src/pages/Paywall.tsx`: "Unlock the full Reliv experience" → "Unlock the full REELIVE experience"
+   - `src/hooks/useLocalNotifications.ts`: "relive your month" copy stays (it’s a verb), but verify no other stray "Reliv" references.
+   - `src/index.css`: update the comment "Reliv — Warm Sunset Palette" → "REELIVE — Warm Sunset Palette"
 
-3. **Apply rotation in `speedUpBlob`**
-   - After `await video.onloadedmetadata`, read `vw = video.videoWidth`, `vh = video.videoHeight`, and `angle = captureOrientationRef.current`.
-   - Size the canvas: for `±90°` swap width/height (`canvas.width = vh; canvas.height = vw`); for `0°` and `180°` use `vw × vh`.
-   - In the `drawFrame` loop, wrap the draw with:
-     ```ts
-     ctx.save();
-     ctx.translate(canvas.width / 2, canvas.height / 2);
-     ctx.rotate((angle * Math.PI) / 180);
-     ctx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
-     ctx.restore();
-     ```
-   - Keep `ctx.filter` exactly as today (set once before the loop is fine, but since we now `save/restore` per frame, set `ctx.filter` inside the save block or just before — preserves current filter-baking behavior).
+5. **Clean up old logo asset**
+   - Delete `src/assets/reliv-logo.png.asset.json` via the assets tool so the old pointer is removed from the codebase.
 
-4. **Pass-through for `rebakeWithFilter`**
-   - No change needed — it calls `speedUpBlob`, which now reads `captureOrientationRef`. The orientation captured at record time stays valid through retakes/filter rebakes (we don't reset it on retake; next `startRecording` overwrites it).
+### Out of scope (per clarifying answers)
+- Color palette: staying warm sunset.
+- Capacitor `appId` / `appName`: staying as `com.reliv.app` / `Reliv`.
 
-### Notes / edge cases
-
-- **Front camera mirroring** is unrelated and not changed here — that's a horizontal flip preference, not orientation.
-- **Live preview** (`<video>` showing the camera feed) is not rotated — the browser/OS already orients the preview correctly via CSS/viewport. Only the *encoded* output needs rotation.
-- **Capacitor WebView on iOS**: `screen.orientation.angle` is supported; `window.orientation` is the fallback for older iOS WebViews. Both are read at capture time so we don't depend on listeners.
-- No DB, types, or UI changes. Single file touched: `src/hooks/useVideoRecording.ts`.
-
-## Out of scope
-
-- Mid-recording rotation (native apps also lock at start).
-- Writing rotation metadata into the container — we physically rotate pixels, which is simpler and works everywhere including Shotstack downstream.
+### Result
+All visible brand surfaces in the app and web metadata reflect **REELIVE** with the new logo, while underlying technical identifiers remain unchanged.
