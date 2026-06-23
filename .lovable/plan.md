@@ -1,33 +1,48 @@
-## Rebrand: Reliv → REELIVE
+# Add date stamp overlay to compilations
 
-The user wants to rebrand the app to **REELIVE** using the new logo they uploaded. Colors and Capacitor bundle ID stay as-is.
+Add a small "Jun 23, 2026"-style date stamp to the top-left of every clip in a compiled reel. Default ON, with a toggle on the Compile screen so the user can turn it off per reel.
 
-### Changes
+## UX
 
-1. **Register new logo as Lovable Asset**
-   - Use the uploaded `ChatGPT_Image_Jun_20_2026_at_08_04_16_AM.png`.
-   - Run `lovable-assets create` to generate a CDN-hosted `.asset.json` pointer (e.g., `src/assets/reelive-logo.png.asset.json`).
+- **Compile screen** — new toggle row under existing options labeled **"Show date on each clip"**, default **on**. Sits next to / below the existing music & filter controls.
+- **Output** — small white text with a soft dark shadow, top-left corner, ~5% margin from edges. Formatted like `Jun 23, 2026` (using the clip's `capturedAt` date).
+- **Day badge** — unchanged. Both can appear together.
 
-2. **Replace logo in Onboarding screen**
-   - `src/pages/Onboarding.tsx`: swap the `reliv-logo.png.asset.json` import for the new logo asset.
-   - Update `alt="Reliv"` → `alt="REELIVE"`.
+## Implementation
 
-3. **Update `index.html` metadata**
-   - `<title>`: "Reliv — Relive your everyday moments" → "REELIVE — Relive your everyday moments"
-   - `<meta name="description">`, `<meta name="author">`: Reliv → REELIVE
-   - Open Graph `og:title` and `og:description`: Reliv → REELIVE
+### 1. Compile screen state
+- `src/pages/Compile.tsx`: add `const [showDate, setShowDate] = useState(true)`.
+- Add a `<Switch>` row using the existing shadcn `switch` component, label "Show date on each clip".
+- Pass `showDate` through to the compile invocation alongside existing `clipUrls` / `clipDayNumbers`.
 
-4. **Update in-app brand name references**
-   - `src/pages/Paywall.tsx`: "Unlock the full Reliv experience" → "Unlock the full REELIVE experience"
-   - `src/hooks/useLocalNotifications.ts`: "relive your month" copy stays (it’s a verb), but verify no other stray "Reliv" references.
-   - `src/index.css`: update the comment "Reliv — Warm Sunset Palette" → "REELIVE — Warm Sunset Palette"
+### 2. Pass per-clip dates to the edge function
+- `useCloudCompilation` (and/or `useVideoCompilation` if used for cloud path) currently sends `clipUrls` and `clipDayNumbers`. Add `clipDates: string[] | null` — array of ISO `capturedAt` values aligned with `clipUrls`, or `null` when the toggle is off.
 
-5. **Clean up old logo asset**
-   - Delete `src/assets/reliv-logo.png.asset.json` via the assets tool so the old pointer is removed from the codebase.
+### 3. Edge function — render date overlays via Shotstack
+File: `supabase/functions/compile-video/index.ts`
 
-### Out of scope (per clarifying answers)
-- Color palette: staying warm sunset.
-- Capacitor `appId` / `appName`: staying as `com.reliv.app` / `Reliv`.
+- Accept new field `clipDates?: (string | null)[]` from request body.
+- When present, for each unique date string build a tight SVG (same approach as the existing Day badge):
+  - Format date as `MMM d, yyyy` (e.g. `Jun 23, 2026`) server-side using `Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' })`.
+  - White text (#ffffff), `font-size: 36`, semi-transparent black pill (`#000000` @ 0.45 opacity) with rounded corners, small padding. No "Day X" styling — keep it subtle.
+- Upload each unique-date SVG to the `compilations` bucket under `dates/date-<slug>-<userId>-<ts>.svg`, cache public URLs by date string.
+- Add a new overlay track of `image` clips, one per video clip with a date:
+  ```
+  { asset: { type: 'image', src }, start: i*2, length: 2,
+    position: 'topLeft', offset: { x: 0.03, y: 0.03 }, fit: 'none', scale: 1 }
+  ```
+- Track order (top → bottom): day-badge overlay (existing), date overlay (new), video, soundtrack. Date sits above video, below day badge — they don't visually overlap anyway (top-left vs bottom-center).
 
-### Result
-All visible brand surfaces in the app and web metadata reflect **REELIVE** with the new logo, while underlying technical identifiers remain unchanged.
+### 4. Persistence
+- Store toggle state in the `compilation_jobs` row (optional, nice for re-renders): add column `show_date boolean default true` via migration. Not strictly required for the feature; can skip if you'd rather keep schema unchanged.
+
+## Out of scope
+- Local (in-app preview) date overlay on `SelectableClipThumbnail` — thumbnails already show the date in the bottom strip.
+- The legacy client-side `ffmpeg-compiler.ts` path — cloud Shotstack is the production compiler per project memory.
+- Changing the existing Day badge styling.
+
+## Files touched
+- `src/pages/Compile.tsx` — toggle UI + state
+- `src/hooks/useCloudCompilation.ts` — forward `clipDates`
+- `supabase/functions/compile-video/index.ts` — SVG generation + overlay track
+- (Optional) new migration to add `show_date` column
