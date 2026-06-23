@@ -77,6 +77,7 @@ export const useCloudCompilation = (): UseCloudCompilationReturn => {
         body: JSON.stringify({
           clipUrls: params.clipUrls,
           clipDayNumbers: params.clipDayNumbers,
+          clipDates: params.clipDates,
           title: params.title,
           journeyId: params.journeyId,
           duration: params.duration,
