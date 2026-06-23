@@ -11,6 +11,7 @@ export interface CloudCompilationProgress {
 interface SubmitParams {
   clipUrls: string[];
   clipDayNumbers?: (number | null)[];
+  clipDates?: (string | null)[];
   title: string;
   journeyId?: string;
   duration: number;
