@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
     const {
       clipUrls,
       clipDayNumbers,
+      clipDates,
       title,
       journeyId,
       duration,
