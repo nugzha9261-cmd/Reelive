@@ -28,6 +28,7 @@ const Compile: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [selectedMusic, setSelectedMusic] = useState<MusicTrack | null>(null);
+  const [showDate, setShowDate] = useState(true);
 
   const {
     clips,
