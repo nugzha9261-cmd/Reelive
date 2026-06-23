@@ -28,6 +28,7 @@ const Compile: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [selectedMusic, setSelectedMusic] = useState<MusicTrack | null>(null);
+  const [showDate, setShowDate] = useState(true);
 
   const {
     clips,
@@ -87,6 +88,7 @@ const Compile: React.FC = () => {
     await cloudSubmit({
       clipUrls: selectedClips.map(c => c.uri),
       clipDayNumbers: showDayNumbers ? selectedClips.map(c => c.dayNumber ?? null) : undefined,
+      clipDates: showDate ? selectedClips.map(c => c.capturedAt ?? null) : undefined,
       title,
       journeyId: selectedJourneyId !== 'all' ? selectedJourneyId : undefined,
       duration: totalDuration,
@@ -218,6 +220,23 @@ const Compile: React.FC = () => {
 
         {/* Music Picker */}
         <MusicPicker selectedTrack={selectedMusic} onSelect={setSelectedMusic} />
+
+        {/* Date stamp toggle */}
+        <div className="px-5 pt-4">
+          <label className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-card border border-border">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">Show date on each clip</p>
+              <p className="text-xs text-muted-foreground">Small date stamp in the top-left (e.g. Jun 23, 2026)</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={showDate}
+              onChange={(e) => setShowDate(e.target.checked)}
+              className="w-5 h-5 accent-primary cursor-pointer"
+            />
+          </label>
+        </div>
+
 
         {/* Drafts section */}
         {drafts.length > 0 && (

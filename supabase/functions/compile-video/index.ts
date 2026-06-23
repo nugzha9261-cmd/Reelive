@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
     const {
       clipUrls,
       clipDayNumbers,
+      clipDates,
       title,
       journeyId,
       duration,
@@ -144,10 +145,90 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Overlay track must come BEFORE video track so it renders on top
+    // Build date stamp SVGs (top-left corner) and overlay clips
+    const buildDateSvg = (dateLabel: string): string => {
+      const fontSize = 36;
+      const padX = 16;
+      const padY = 8;
+      const textWidth = Math.round(dateLabel.length * fontSize * 0.55);
+      const width = textWidth + padX * 2;
+      const height = fontSize + padY * 2;
+      const rx = 8;
+      const textY = padY + fontSize * 0.78;
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <rect x="0" y="0" width="${width}" height="${height}" rx="${rx}" ry="${rx}" fill="#000000" fill-opacity="0.45"/>
+  <text x="${width / 2}" y="${textY}" text-anchor="middle"
+        font-family="Helvetica, Arial, sans-serif" font-weight="600" font-size="${fontSize}" fill="#ffffff">${dateLabel}</text>
+</svg>`;
+    };
+
+    const formatDate = (iso: string): string => {
+      try {
+        const d = new Date(iso);
+        return new Intl.DateTimeFormat("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }).format(d);
+      } catch {
+        return "";
+      }
+    };
+
+    const dateUrlByLabel = new Map<string, string>();
+    const dateLabels: (string | null)[] = [];
+    if (clipDates && Array.isArray(clipDates)) {
+      for (const iso of clipDates) {
+        dateLabels.push(iso ? formatDate(iso) || null : null);
+      }
+      const uniqueLabels = Array.from(
+        new Set(dateLabels.filter((l): l is string => !!l)),
+      );
+      await Promise.all(uniqueLabels.map(async (label) => {
+        const svg = buildDateSvg(label);
+        const slug = label.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+        const path = `dates/date-${slug}-${user.id}-${Date.now()}.svg`;
+        const { error: upErr } = await supabase.storage
+          .from("compilations")
+          .upload(path, new Blob([svg], { type: "image/svg+xml" }), {
+            contentType: "image/svg+xml",
+            upsert: true,
+          });
+        if (upErr) {
+          console.error(`[compile-video] Date upload failed for ${label}:`, upErr);
+          return;
+        }
+        const { data: pub } = supabase.storage
+          .from("compilations")
+          .getPublicUrl(path);
+        if (pub?.publicUrl) dateUrlByLabel.set(label, pub.publicUrl);
+      }));
+    }
+
+    const dateOverlayClips: any[] = [];
+    dateLabels.forEach((label, i) => {
+      if (!label) return;
+      const src = dateUrlByLabel.get(label);
+      if (!src) return;
+      dateOverlayClips.push({
+        asset: { type: "image", src },
+        start: i * CLIP_DURATION,
+        length: CLIP_DURATION,
+        position: "topLeft",
+        offset: { x: 0.03, y: -0.03 },
+        fit: "none",
+        scale: 1,
+      });
+    });
+
+    // Track order: higher index in array = rendered on top
+    // We want: day badge (top) > date stamp > video > audio (bottom)
     const tracks: any[] = [];
     if (overlayClips.length > 0) {
       tracks.push({ clips: overlayClips });
+    }
+    if (dateOverlayClips.length > 0) {
+      tracks.push({ clips: dateOverlayClips });
     }
     tracks.push({ clips: videoClips });
 
