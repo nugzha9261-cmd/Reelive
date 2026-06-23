@@ -88,6 +88,7 @@ const Compile: React.FC = () => {
     await cloudSubmit({
       clipUrls: selectedClips.map(c => c.uri),
       clipDayNumbers: showDayNumbers ? selectedClips.map(c => c.dayNumber ?? null) : undefined,
+      clipDates: showDate ? selectedClips.map(c => c.capturedAt ?? null) : undefined,
       title,
       journeyId: selectedJourneyId !== 'all' ? selectedJourneyId : undefined,
       duration: totalDuration,
