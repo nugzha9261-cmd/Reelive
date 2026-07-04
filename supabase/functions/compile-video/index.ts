@@ -76,22 +76,31 @@ Deno.serve(async (req) => {
     // pill to be ~28% of the frame width with text that fills the pill.
     const buildBadgeSvg = (dayNum: number): string => {
       const text = `Day ${dayNum}`;
-      const fontSize = 72;
-      const padX = 36;
-      const padY = 14;
-      // Approximate glyph width for Helvetica Bold at this size
-      const textWidth = Math.round(text.length * fontSize * 0.58);
+      const fontSize = 96;
+      // Handwritten fonts are wider; give generous padding so the shadow isn't clipped.
+      const padX = 40;
+      const padY = 24;
+      const textWidth = Math.round(text.length * fontSize * 0.55);
       const width = textWidth + padX * 2;
       const height = fontSize + padY * 2;
-      const rx = height / 2;
-      // Use explicit y baseline (not dominant-baseline) for consistent rendering across renderers.
-      // For Helvetica, baseline ~= top + fontSize * 0.78 visually centers the cap-height.
-      const textY = padY + fontSize * 0.78;
+      const textY = padY + fontSize * 0.82;
 
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <rect x="0" y="0" width="${width}" height="${height}" rx="${rx}" ry="${rx}" fill="#e67e22" fill-opacity="0.78"/>
+  <defs>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="2" dy="3" result="offsetblur"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.6"/></feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
   <text x="${width / 2}" y="${textY}" text-anchor="middle"
-        font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="${fontSize}" fill="#ffffff">${text}</text>
+        font-family="'Caveat', 'Bradley Hand', 'Snell Roundhand', 'Segoe Script', 'Comic Sans MS', cursive"
+        font-weight="700" font-size="${fontSize}" fill="#ffffff"
+        filter="url(#soft-shadow)">${text}</text>
 </svg>`;
     };
 
