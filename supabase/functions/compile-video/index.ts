@@ -86,6 +86,14 @@ Deno.serve(async (req) => {
 
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
+    <style>
+      @font-face {
+        font-family: 'CaveatBadge';
+        font-style: normal;
+        font-weight: 700;
+        src: url('https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjRV6SII.ttf') format('truetype');
+      }
+    </style>
     <filter id="soft-shadow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
       <feOffset dx="2" dy="3" result="offsetblur"/>
@@ -98,7 +106,7 @@ Deno.serve(async (req) => {
     </filter>
   </defs>
   <text x="${width / 2}" y="${textY}" text-anchor="middle"
-        font-family="'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive"
+        font-family="'CaveatBadge', 'Comic Sans MS', 'Chalkboard SE', cursive"
         font-weight="700" font-size="${fontSize}" fill="#ffffff"
         filter="url(#soft-shadow)">${text}</text>
 </svg>`;
