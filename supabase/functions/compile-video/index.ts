@@ -76,29 +76,29 @@ Deno.serve(async (req) => {
     // pill to be ~28% of the frame width with text that fills the pill.
     const buildBadgeSvg = (dayNum: number): string => {
       const text = `Day ${dayNum}`;
-      const fontSize = 96;
-      // Handwritten fonts are wider; give generous padding so the shadow isn't clipped.
-      const padX = 40;
+      const fontSize = 48;
+      const padX = 30;
       const padY = 24;
-      const textWidth = Math.round(text.length * fontSize * 0.55);
+      const textWidth = Math.round(text.length * fontSize * 0.6);
       const width = textWidth + padX * 2;
       const height = fontSize + padY * 2;
       const textY = padY + fontSize * 0.82;
 
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
-    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+    <filter id="soft-shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
       <feOffset dx="2" dy="3" result="offsetblur"/>
-      <feComponentTransfer><feFuncA type="linear" slope="0.6"/></feComponentTransfer>
+      <feComponentTransfer><feFuncA type="linear" slope="0.95"/></feComponentTransfer>
       <feMerge>
+        <feMergeNode/>
         <feMergeNode/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
   </defs>
   <text x="${width / 2}" y="${textY}" text-anchor="middle"
-        font-family="'Caveat', 'Bradley Hand', 'Snell Roundhand', 'Segoe Script', 'Comic Sans MS', cursive"
+        font-family="'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive"
         font-weight="700" font-size="${fontSize}" fill="#ffffff"
         filter="url(#soft-shadow)">${text}</text>
 </svg>`;
