@@ -69,11 +69,29 @@ Deno.serve(async (req) => {
       length: CLIP_DURATION,
     }));
 
-    // Build overlay track for day labels using SVG-as-image overlay.
-    // Shotstack rejects data: URIs, so we upload each unique badge SVG to the
-    // public `compilations` bucket and reference it by https URL.
-    // Render badge as a tight SVG. Output frame is 720x1280; we want the
-    // pill to be ~28% of the frame width with text that fills the pill.
+    // Build overlay track for day labels. Shotstack's SVG renderer does not
+    // fetch external @font-face URLs, so we render the badge to a PNG using
+    // an HTML canvas approach — actually, since Deno lacks canvas, we fetch
+    // the Caveat TTF once and embed it as a base64 data URI inside the SVG.
+    let caveatBase64: string | null = null;
+    try {
+      const fontRes = await fetch(
+        "https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjRV6SII.ttf",
+      );
+      if (fontRes.ok) {
+        const buf = new Uint8Array(await fontRes.arrayBuffer());
+        // base64-encode
+        let binary = "";
+        const chunk = 0x8000;
+        for (let i = 0; i < buf.length; i += chunk) {
+          binary += String.fromCharCode(...buf.subarray(i, i + chunk));
+        }
+        caveatBase64 = btoa(binary);
+      }
+    } catch (e) {
+      console.warn("[compile-video] Caveat font fetch failed:", e);
+    }
+
     const buildBadgeSvg = (dayNum: number): string => {
       const text = `Day ${dayNum}`;
       const fontSize = 48;
@@ -84,16 +102,13 @@ Deno.serve(async (req) => {
       const height = fontSize + padY * 2;
       const textY = padY + fontSize * 0.82;
 
+      const fontFaceStyle = caveatBase64
+        ? `<style>@font-face { font-family: 'CaveatBadge'; font-style: normal; font-weight: 700; src: url('data:font/ttf;base64,${caveatBase64}') format('truetype'); }</style>`
+        : "";
+
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
-    <style>
-      @font-face {
-        font-family: 'CaveatBadge';
-        font-style: normal;
-        font-weight: 700;
-        src: url('https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjRV6SII.ttf') format('truetype');
-      }
-    </style>
+    ${fontFaceStyle}
     <filter id="soft-shadow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
       <feOffset dx="2" dy="3" result="offsetblur"/>
