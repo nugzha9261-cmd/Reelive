@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import opentype from "npm:opentype.js@1.3.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,24 +70,15 @@ Deno.serve(async (req) => {
       length: CLIP_DURATION,
     }));
 
-    // Build overlay track for day labels. Shotstack's SVG renderer does not
-    // fetch external @font-face URLs, so we render the badge to a PNG using
-    // an HTML canvas approach — actually, since Deno lacks canvas, we fetch
-    // the Caveat TTF once and embed it as a base64 data URI inside the SVG.
-    let caveatBase64: string | null = null;
+    // Build overlay track for day labels. Shotstack does not reliably render
+    // custom SVG fonts, so convert the handwritten font glyphs into SVG paths.
+    let caveatFont: opentype.Font | null = null;
     try {
       const fontRes = await fetch(
         "https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjRV6SII.ttf",
       );
       if (fontRes.ok) {
-        const buf = new Uint8Array(await fontRes.arrayBuffer());
-        // base64-encode
-        let binary = "";
-        const chunk = 0x8000;
-        for (let i = 0; i < buf.length; i += chunk) {
-          binary += String.fromCharCode(...buf.subarray(i, i + chunk));
-        }
-        caveatBase64 = btoa(binary);
+        caveatFont = opentype.parse(await fontRes.arrayBuffer());
       }
     } catch (e) {
       console.warn("[compile-video] Caveat font fetch failed:", e);
@@ -95,20 +87,42 @@ Deno.serve(async (req) => {
     const buildBadgeSvg = (dayNum: number): string => {
       const text = `Day ${dayNum}`;
       const fontSize = 48;
-      const padX = 30;
-      const padY = 24;
+      const padX = 26;
+      const padY = 22;
+
+      if (caveatFont) {
+        const textPath = caveatFont.getPath(text, 0, 0, fontSize);
+        const box = textPath.getBoundingBox();
+        const width = Math.ceil(box.x2 - box.x1 + padX * 2);
+        const height = Math.ceil(box.y2 - box.y1 + padY * 2);
+        const x = padX - box.x1;
+        const y = padY - box.y1;
+        const pathData = caveatFont.getPath(text, x, y, fontSize).toPathData(2);
+
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <defs>
+    <filter id="soft-shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="2" dy="3" result="offsetblur"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.95"/></feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <path d="${pathData}" fill="#ffffff" filter="url(#soft-shadow)"/>
+</svg>`;
+      }
+
       const textWidth = Math.round(text.length * fontSize * 0.6);
       const width = textWidth + padX * 2;
       const height = fontSize + padY * 2;
       const textY = padY + fontSize * 0.82;
 
-      const fontFaceStyle = caveatBase64
-        ? `<style>@font-face { font-family: 'CaveatBadge'; font-style: normal; font-weight: 700; src: url('data:font/ttf;base64,${caveatBase64}') format('truetype'); }</style>`
-        : "";
-
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>
-    ${fontFaceStyle}
     <filter id="soft-shadow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
       <feOffset dx="2" dy="3" result="offsetblur"/>
@@ -121,7 +135,7 @@ Deno.serve(async (req) => {
     </filter>
   </defs>
   <text x="${width / 2}" y="${textY}" text-anchor="middle"
-        font-family="'CaveatBadge', 'Comic Sans MS', 'Chalkboard SE', cursive"
+        font-family="'Comic Sans MS', 'Chalkboard SE', cursive"
         font-weight="700" font-size="${fontSize}" fill="#ffffff"
         filter="url(#soft-shadow)">${text}</text>
 </svg>`;
