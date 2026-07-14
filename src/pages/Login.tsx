@@ -119,6 +119,11 @@ const Login: React.FC = () => {
             required
             className="h-12"
           />
+          <div className="text-right">
+            <Link to="/forgot-password" className="text-sm text-primary font-medium">
+              Forgot password?
+            </Link>
+          </div>
         </div>
 
         <IOSButton
