@@ -22,6 +22,8 @@ const Timeline = lazy(() => import("./pages/Timeline"));
 const Reels = lazy(() => import("./pages/Reels"));
 const Compile = lazy(() => import("./pages/Compile"));
 const Paywall = lazy(() => import("./pages/Paywall"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -55,6 +57,8 @@ const App = () => (
               <Route path="/" element={<Onboarding />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Protected routes */}
               <Route path="/home" element={
