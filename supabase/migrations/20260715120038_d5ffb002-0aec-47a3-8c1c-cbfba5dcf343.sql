@@ -1,0 +1,2 @@
+ALTER TABLE public.journeys DROP CONSTRAINT journeys_type_check;
+ALTER TABLE public.journeys ADD CONSTRAINT journeys_type_check CHECK (type = ANY (ARRAY['child','weightloss','pregnancy','travel','custom']));
