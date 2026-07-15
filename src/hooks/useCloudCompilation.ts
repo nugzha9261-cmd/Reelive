@@ -64,6 +64,13 @@ export const useCloudCompilation = (): UseCloudCompilationReturn => {
     setResultUrl(null);
 
     try {
+      // Validate session is still valid on the server (not just cached locally)
+      const { data: userCheck, error: userErr } = await supabase.auth.getUser();
+      if (userErr || !userCheck?.user) {
+        await supabase.auth.signOut();
+        throw new Error('Your session expired. Please sign in again.');
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Please sign in to compile videos');
 
@@ -87,6 +94,10 @@ export const useCloudCompilation = (): UseCloudCompilationReturn => {
       });
 
       const data = await res.json();
+      if (res.status === 401) {
+        await supabase.auth.signOut();
+        throw new Error('Your session expired. Please sign in again.');
+      }
       if (!res.ok) throw new Error(data.error || 'Failed to start compilation');
 
       const jobId = data.jobId;
