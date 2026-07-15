@@ -68,7 +68,7 @@ export const useCloudCompilation = (): UseCloudCompilationReturn => {
       const { data: userCheck, error: userErr } = await supabase.auth.getUser();
       if (userErr || !userCheck?.user) {
         await supabase.auth.signOut();
-        throw new Error('Your session expired. Please sign in again.');
+        throw new Error('Session expired. Please sign in again.');
       }
 
       const { data: { session } } = await supabase.auth.getSession();
