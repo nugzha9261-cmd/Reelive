@@ -96,7 +96,7 @@ export const useCloudCompilation = (): UseCloudCompilationReturn => {
       const data = await res.json();
       if (res.status === 401) {
         await supabase.auth.signOut();
-        throw new Error('Your session expired. Please sign in again.');
+        throw new Error('Session expired. Please sign in again.');
       }
       if (!res.ok) throw new Error(data.error || 'Failed to start compilation');
 
