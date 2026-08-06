@@ -16,7 +16,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
     <div
       className={cn(
         'min-h-screen max-w-md mx-auto bg-background',
-        !noPadding && 'px-5 pt-12 pb-24',
+        !noPadding && 'px-5 pt-[calc(env(safe-area-inset-top)+3rem)] pb-24',
         className
       )}
     >
