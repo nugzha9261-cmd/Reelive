@@ -24,6 +24,19 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>REELIVE uses your camera to capture short daily video clips for your journey.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>REELIVE records audio with your daily video clips.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>REELIVE can save your compiled reels to your photo library if you choose to download them.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>REELIVE can access your photo library if you choose to upload a journey photo.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
