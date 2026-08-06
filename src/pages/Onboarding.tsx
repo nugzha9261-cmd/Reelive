@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { Sparkles, Camera, Film } from 'lucide-react';
 import { IOSButton } from '@/components/ui/ios-button';
 import onboardingBg from '@/assets/onboarding-bg.jpg';
-import reeliveLogo from '@/assets/reelive-logo.png.asset.json';
+import reeliveLogo from '@/assets/reelive-logo.png';
 import { cn } from '@/lib/utils';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -100,7 +100,7 @@ const Onboarding: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background" />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col min-h-screen px-8 pt-20 pb-12">
+      <div className="relative z-10 flex flex-col min-h-screen px-8 pt-[calc(env(safe-area-inset-top)+3rem)] pb-12">
         {/* Skip button */}
         <button
           onClick={() => navigate('/home')}
@@ -118,9 +118,9 @@ const Onboarding: React.FC = () => {
                   <div key={index} className="min-w-0 shrink-0 grow-0 basis-full">
                     <div className="flex flex-col items-center justify-center text-center px-2">
                       <img
-                        src={reeliveLogo.url}
+                        src={reeliveLogo}
                         alt="REELIVE"
-                        className="w-28 h-28 object-contain mb-6"
+                        className="w-48 h-20 object-contain mb-6"
                       />
                       <h1 className="text-[26px] leading-tight font-bold text-foreground mb-4 max-w-xs">
                         {slide.headline}
