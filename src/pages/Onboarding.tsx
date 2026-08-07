@@ -100,7 +100,7 @@ const Onboarding: React.FC = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background" />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col min-h-screen px-8 pt-[calc(env(safe-area-inset-top)+3rem)] pb-12">
+      <div className="relative z-10 flex flex-col min-h-screen px-8 pt-[calc(env(safe-area-inset-top)+1rem)] pb-12">
         {/* Skip button */}
         <button
           onClick={() => navigate('/home')}
