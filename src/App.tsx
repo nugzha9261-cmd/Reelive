@@ -25,6 +25,7 @@ const Paywall = lazy(() => import("./pages/Paywall"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Support = lazy(() => import("./pages/Support"));
+const ReeliveMarketing = lazy(() => import("./pages/ReeliveMarketing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
