@@ -25,6 +25,7 @@ const Paywall = lazy(() => import("./pages/Paywall"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Support = lazy(() => import("./pages/Support"));
+const ReeliveMarketing = lazy(() => import("./pages/ReeliveMarketing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/reelive" element={<ReeliveMarketing />} />
               
               {/* Protected routes */}
               <Route path="/home" element={
