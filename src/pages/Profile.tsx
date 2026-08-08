@@ -174,6 +174,7 @@ const Profile: React.FC = () => {
               <SettingItem
                 icon={HelpCircle}
                 label="Help & support"
+                onClick={() => navigate('/support')}
               />
             </div>
           </div>
