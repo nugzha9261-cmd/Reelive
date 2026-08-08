@@ -1,40 +1,31 @@
-# App Store Name Conflict Resolution
+# Create In-App Support Page
 
-## Problem
-Apple rejected the app name "REELIVE" in App Store Connect because that exact App Name is already registered by another developer. The App Name field (under the iOS home screen icon) must be unique globally.
+## Goal
+Add a real support page to the app with the contact email `admin@nexonelabs.com`, and wire it from the Profile screen's "Help & support" row.
 
-## Decision
-Use the differentiated App Name **"REELIVE: Daily Clips"** to preserve the brand while satisfying Apple's uniqueness requirement. This is under 30 characters and clearly describes the app's purpose.
+## What to build
 
-## Changes to make
+1. **New page component** `src/pages/Support.tsx`
+   - Page title: "Help & Support" or "Support"
+   - Contact email: `admin@nexonelabs.com`
+   - A tappable/clickable mailto link so users can email directly
+   - Short explanation (e.g., "Questions, feedback, or bug reports? Reach us anytime.")
+   - Use the existing `MobileLayout` wrapper for consistent safe-area padding and header
 
-1. Update the display name in the Capacitor config so the bundled iOS app reflects the new name:
-   - `capacitor.config.ts` → `appName: 'REELIVE: Daily Clips'`
+2. **Add route** in `src/App.tsx`
+   - Path: `/support`
+   - Protected route (only accessible when signed in, like Profile)
 
-2. Update web metadata to match the new App Store name:
-   - `index.html` → `<title>` and `description`
+3. **Wire the Profile link** in `src/pages/Profile.tsx`
+   - Add `onClick` to the "Help & support" row to navigate to `/support`
 
-3. Update the iOS native display name:
-   - `ios/App/App/Info.plist` → `CFBundleDisplayName`
+## URLs
 
-4. Update the in-app premium screen copy to stay consistent:
-   - `src/pages/Paywall.tsx` → "Unlock the full REELIVE: Daily Clips experience"
+- In-app route: `/support`
+- Public web URL (published site): `https://lifeinreel.lovable.app/support` or `https://lifeshots.app/support` (if custom domain is live)
+- This is the URL you can paste into App Store Connect as the **Support URL** if Apple asks for one
 
-## What stays the same
+## Out of scope
 
-- Bundle ID: `com.nexzonelabs.reelive`
-- URL scheme: `reelive`
-- App logo and icon assets
-- All other references to "REELIVE" as the brand name
-
-## After code changes
-
-Run the standard native sync so the updated iOS app name is written into the Xcode project:
-
-```text
-npm install
-npm run build
-npx cap sync ios
-```
-
-Then re-open Xcode and submit the new App Name in App Store Connect.
+- No backend or form submission; support is email-only for now
+- No privacy policy or terms page changes unless you ask for them
