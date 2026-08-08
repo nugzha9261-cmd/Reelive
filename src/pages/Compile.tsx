@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 
 const Compile: React.FC = () => {
   const navigate = useNavigate();
+  const isCompilingRef = useRef(false);
   const { journeys } = useJourneys();
   const { canCreateCompilation, compilationCount, isPremium, refresh: refreshLimits } = useFreeTierLimits();
   
@@ -152,7 +153,14 @@ const Compile: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    if (isCompilingRef.current) {
+      cloudReset();
+    }
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/home');
+    }
   };
 
   const handleDeleteDraft = async (id: string) => {
@@ -174,6 +182,7 @@ const Compile: React.FC = () => {
   };
 
   const isCompiling = cloudProgress.stage === 'submitting' || cloudProgress.stage === 'processing';
+  isCompilingRef.current = isCompiling;
 
   return (
     <>
@@ -326,7 +335,12 @@ const Compile: React.FC = () => {
       />
 
       {/* Cloud compilation progress overlay */}
-      <CloudCompilationProgress progress={cloudProgress} />
+      <CloudCompilationProgress
+        progress={cloudProgress}
+        onDismiss={() => {
+          cloudReset();
+        }}
+      />
 
       {/* Result sheet */}
       <CompilationResultSheet
