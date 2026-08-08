@@ -24,6 +24,7 @@ const Compile = lazy(() => import("./pages/Compile"));
 const Paywall = lazy(() => import("./pages/Paywall"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Support = lazy(() => import("./pages/Support"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -104,6 +105,11 @@ const App = () => (
               <Route path="/paywall" element={
                 <ProtectedRoute>
                   <Paywall />
+                </ProtectedRoute>
+              } />
+              <Route path="/support" element={
+                <ProtectedRoute>
+                  <Support />
                 </ProtectedRoute>
               } />
               
