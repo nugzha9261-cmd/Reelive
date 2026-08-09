@@ -20,20 +20,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Configure RevenueCat on app launch with a null user, then re-configure on auth changes
+    configurePurchases(null);
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        const user = session?.user ?? null;
+        setUser(user);
         setLoading(false);
+
+        if (user) {
+          await loginRevenueCat(user.id);
+        } else {
+          await logoutRevenueCat();
+        }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
-      setUser(session?.user ?? null);
+      const user = session?.user ?? null;
+      setUser(user);
       setLoading(false);
+
+      if (user) {
+        await loginRevenueCat(user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
