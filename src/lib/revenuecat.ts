@@ -1,4 +1,4 @@
-import { Purchases, PurchasesPackage, PurchasesOffering } from '@revenuecat/purchases-capacitor';
+import { Purchases, PurchasesPackage, PurchasesOffering, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
 
 const REVENUECAT_PUBLIC_KEY = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY as string | undefined;
 
@@ -31,7 +31,7 @@ export async function configurePurchases(userId: string | null): Promise<void> {
     appUserID: userId ?? undefined,
   });
 
-  await Purchases.setLogLevel({ level: 'DEBUG' });
+  await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
 }
 
 export async function loginRevenueCat(userId: string): Promise<void> {
