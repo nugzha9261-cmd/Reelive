@@ -20,10 +20,16 @@ const FEATURES = [
   { icon: Crown, label: 'Priority cloud rendering', desc: 'Faster compilation processing' },
 ];
 
-const PLANS = [
-  { id: 'monthly', label: 'Monthly', price: '$4.99', period: '/month', badge: null },
-  { id: 'yearly', label: 'Yearly', price: '$39.99', period: '/year', badge: 'Save 33%' },
-  { id: 'lifetime', label: 'Lifetime', price: '$79.99', period: 'one-time', badge: 'Best value' },
+const PLANS: {
+  id: PlanType;
+  label: string;
+  fallbackPrice: string;
+  fallbackPeriod: string;
+  badge: string | null;
+}[] = [
+  { id: 'monthly', label: 'Monthly', fallbackPrice: '$4.99', fallbackPeriod: '/month', badge: null },
+  { id: 'yearly', label: 'Yearly', fallbackPrice: '$39.99', fallbackPeriod: '/year', badge: 'Save 33%' },
+  { id: 'lifetime', label: 'Lifetime', fallbackPrice: '$79.99', fallbackPeriod: 'one-time', badge: 'Best value' },
 ];
 
 const Paywall: React.FC = () => {
