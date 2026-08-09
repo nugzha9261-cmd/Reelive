@@ -11,6 +11,7 @@ import {
   purchasePlan,
   restorePurchases,
   PlanPackage,
+  PlanType,
 } from '@/lib/revenuecat';
 
 const FEATURES = [
