@@ -156,9 +156,12 @@ const Paywall: React.FC = () => {
         {/* Plans */}
         <div className="px-6 mb-6 space-y-3">
           {PLANS.map((plan) => {
-            const available = offeringsLoaded
-              ? offerings.some((o) => o.id === plan.id)
-              : true;
+            const found = offerings.find((o) => o.id === plan.id);
+            const available = offeringsLoaded ? !!found : true;
+            const price = found?.package.product.priceString ?? plan.fallbackPrice;
+            const period = found?.package.product.subscriptionPeriod
+              ? found.package.product.subscriptionPeriod
+              : plan.fallbackPeriod;
             return (
               <button
                 key={plan.id}
@@ -181,9 +184,9 @@ const Paywall: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{plan.period}</p>
+                  <p className="text-sm text-muted-foreground">{period}</p>
                 </div>
-                <p className="text-xl font-bold text-foreground">{plan.price}</p>
+                <p className="text-xl font-bold text-foreground">{price}</p>
               </button>
             );
           })}
