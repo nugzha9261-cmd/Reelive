@@ -20,39 +20,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Configure RevenueCat on app launch with a null user, then re-configure on auth changes
-    configurePurchases(null);
+    let subscription: { unsubscribe: () => void } | null = null;
+    let active = true;
 
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    (async () => {
+      // Configure RevenueCat BEFORE any login/logout call to avoid
+      // "SDK not configured" errors on native.
+      await configurePurchases(null);
+      if (!active) return;
+
+      // Set up auth state listener FIRST
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
         setSession(session);
         const user = session?.user ?? null;
         setUser(user);
         setLoading(false);
 
         if (user) {
-          await loginRevenueCat(user.id);
+          void loginRevenueCat(user.id);
         } else {
-          await logoutRevenueCat();
+          void logoutRevenueCat();
         }
-      }
-    );
+      });
+      subscription = data.subscription;
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      // THEN check for existing session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!active) return;
       setSession(session);
-      const user = session?.user ?? null;
-      setUser(user);
+      const existingUser = session?.user ?? null;
+      setUser(existingUser);
       setLoading(false);
 
-      if (user) {
-        await loginRevenueCat(user.id);
+      if (existingUser) {
+        void loginRevenueCat(existingUser.id);
       }
-    });
+    })();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription?.unsubscribe();
+    };
   }, []);
+
 
   const signUp = async (email: string, password: string, displayName?: string) => {
     const { error } = await supabase.auth.signUp({

@@ -1,4 +1,5 @@
 import { Purchases, PurchasesPackage, PurchasesOffering, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
+import { Capacitor } from '@capacitor/core';
 
 const REVENUECAT_PUBLIC_KEY = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY as string | undefined;
 
@@ -10,32 +11,56 @@ export interface PlanPackage {
 }
 
 function isNative(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    (window as unknown as { Capacitor?: unknown }).Capacitor !== undefined
-  );
+  return Capacitor.isNativePlatform();
 }
 
-export async function configurePurchases(userId: string | null): Promise<void> {
-  if (!isNative()) {
-    return;
+let configurePromise: Promise<boolean> | null = null;
+let configured = false;
+
+export function isPurchasesReady(): boolean {
+  return configured;
+}
+
+/**
+ * Configures the RevenueCat SDK exactly once. Every other call in this module
+ * awaits this promise so we never hit "singleton instance not configured".
+ */
+export async function configurePurchases(userId: string | null): Promise<boolean> {
+  if (!isNative()) return false;
+
+  if (!configurePromise) {
+    configurePromise = (async () => {
+      if (!REVENUECAT_PUBLIC_KEY) {
+        console.warn('VITE_REVENUECAT_PUBLIC_KEY is not set. RevenueCat purchases will be disabled.');
+        return false;
+      }
+
+      try {
+        await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+        await Purchases.configure({
+          apiKey: REVENUECAT_PUBLIC_KEY,
+          appUserID: userId ?? undefined,
+        });
+        configured = true;
+        return true;
+      } catch (err) {
+        console.warn('RevenueCat configure failed', err);
+        configurePromise = null;
+        return false;
+      }
+    })();
   }
 
-  if (!REVENUECAT_PUBLIC_KEY) {
-    console.warn('VITE_REVENUECAT_PUBLIC_KEY is not set. RevenueCat purchases will be disabled.');
-    return;
-  }
+  return configurePromise;
+}
 
-  await Purchases.configure({
-    apiKey: REVENUECAT_PUBLIC_KEY,
-    appUserID: userId ?? undefined,
-  });
-
-  await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+async function ready(): Promise<boolean> {
+  if (!isNative()) return false;
+  return configurePurchases(null);
 }
 
 export async function loginRevenueCat(userId: string): Promise<void> {
-  if (!isNative()) return;
+  if (!(await ready())) return;
 
   try {
     await Purchases.logIn({ appUserID: userId });
@@ -45,7 +70,7 @@ export async function loginRevenueCat(userId: string): Promise<void> {
 }
 
 export async function logoutRevenueCat(): Promise<void> {
-  if (!isNative()) return;
+  if (!(await ready())) return;
 
   try {
     await Purchases.logOut();
@@ -55,42 +80,43 @@ export async function logoutRevenueCat(): Promise<void> {
 }
 
 export async function getPremiumOfferings(): Promise<PlanPackage[]> {
-  if (!isNative()) {
+  if (!(await ready())) return [];
+
+  try {
+    const offerings = await Purchases.getOfferings();
+    const current = offerings.current as PurchasesOffering | null;
+
+    if (!current?.availablePackages?.length) {
+      return [];
+    }
+
+    const result: PlanPackage[] = [];
+
+    for (const pkg of current.availablePackages) {
+      const id = `${pkg.identifier} ${pkg.product?.identifier ?? ''}`.toLowerCase();
+      if (id.includes('monthly') || id.includes('month')) result.push({ id: 'monthly', package: pkg });
+      else if (id.includes('yearly') || id.includes('annual') || id.includes('year')) result.push({ id: 'yearly', package: pkg });
+      else if (id.includes('lifetime')) result.push({ id: 'lifetime', package: pkg });
+    }
+
+    return result;
+  } catch (err) {
+    console.warn('RevenueCat getOfferings failed', err);
     return [];
   }
-
-  const offerings = await Purchases.getOfferings();
-  const current = offerings.current as PurchasesOffering | null;
-
-  if (!current?.availablePackages?.length) {
-    return [];
-  }
-
-  const result: PlanPackage[] = [];
-
-  for (const pkg of current.availablePackages) {
-    const id = pkg.identifier.toLowerCase();
-    if (id.includes('monthly')) result.push({ id: 'monthly', package: pkg });
-    else if (id.includes('yearly') || id.includes('annual')) result.push({ id: 'yearly', package: pkg });
-    else if (id.includes('lifetime')) result.push({ id: 'lifetime', package: pkg });
-  }
-
-  return result;
 }
 
 export async function purchasePlan(planPackage: PurchasesPackage): Promise<boolean> {
-  if (!isNative()) {
-    return false;
+  if (!(await ready())) {
+    throw new Error('Purchases are only available in the mobile app.');
   }
 
-  const result = await Purchases.purchasePackage({ aPackage: planPackage });
+  await Purchases.purchasePackage({ aPackage: planPackage });
   return true;
 }
 
 export async function restorePurchases(): Promise<boolean> {
-  if (!isNative()) {
-    return false;
-  }
+  if (!(await ready())) return false;
 
   const { customerInfo } = await Purchases.restorePurchases();
   const premium = customerInfo.entitlements.active['premium'];
@@ -98,7 +124,7 @@ export async function restorePurchases(): Promise<boolean> {
 }
 
 export async function getCustomerInfo(): Promise<{ isPremium: boolean; productId: string | null }> {
-  if (!isNative()) {
+  if (!(await ready())) {
     return { isPremium: false, productId: null };
   }
 
