@@ -26,7 +26,7 @@ export function isPurchasesReady(): boolean {
  * awaits this promise so we never hit "singleton instance not configured".
  */
 export async function configurePurchases(userId: string | null): Promise<boolean> {
-  if (!isNative() || !Capacitor.isPluginAvailable('Purchases')) return false;
+  if (!isNative()) return false;
 
   if (!configurePromise) {
     configurePromise = (async () => {
@@ -64,7 +64,7 @@ export async function configurePurchases(userId: string | null): Promise<boolean
 }
 
 async function ready(): Promise<boolean> {
-  if (!isNative() || !Capacitor.isPluginAvailable('Purchases')) return false;
+  if (!isNative()) return false;
   return configurePurchases(null);
 }
 
