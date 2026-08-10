@@ -26,7 +26,7 @@ export function isPurchasesReady(): boolean {
  * awaits this promise so we never hit "singleton instance not configured".
  */
 export async function configurePurchases(userId: string | null): Promise<boolean> {
-  if (!isNative()) return false;
+  if (!isNative() || !Capacitor.isPluginAvailable('Purchases')) return false;
 
   if (!configurePromise) {
     configurePromise = (async () => {
@@ -37,10 +37,19 @@ export async function configurePurchases(userId: string | null): Promise<boolean
 
       try {
         await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
-        await Purchases.configure({
-          apiKey: REVENUECAT_PUBLIC_KEY,
-          appUserID: userId ?? undefined,
-        });
+        const nativeState = await Purchases.isConfigured();
+        if (!nativeState.isConfigured) {
+          await Purchases.configure({
+            apiKey: REVENUECAT_PUBLIC_KEY,
+            appUserID: userId ?? undefined,
+          });
+        }
+
+        const verifiedState = await Purchases.isConfigured();
+        if (!verifiedState.isConfigured) {
+          throw new Error('RevenueCat native SDK did not finish configuring.');
+        }
+
         configured = true;
         return true;
       } catch (err) {
@@ -55,7 +64,7 @@ export async function configurePurchases(userId: string | null): Promise<boolean
 }
 
 async function ready(): Promise<boolean> {
-  if (!isNative()) return false;
+  if (!isNative() || !Capacitor.isPluginAvailable('Purchases')) return false;
   return configurePurchases(null);
 }
 
@@ -108,7 +117,7 @@ export async function getPremiumOfferings(): Promise<PlanPackage[]> {
 
 export async function purchasePlan(planPackage: PurchasesPackage): Promise<boolean> {
   if (!(await ready())) {
-    throw new Error('Purchases are only available in the mobile app.');
+    throw new Error('Purchases are not connected in this app build. Please install the latest build and try again.');
   }
 
   await Purchases.purchasePackage({ aPackage: planPackage });
