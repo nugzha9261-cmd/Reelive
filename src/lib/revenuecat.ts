@@ -1,4 +1,4 @@
-import { Purchases, PurchasesPackage, PurchasesOffering, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
+import { Purchases, PurchasesPackage, PurchasesOffering, LOG_LEVEL, PACKAGE_TYPE } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
 
 const REVENUECAT_PUBLIC_KEY = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY as string | undefined;
@@ -105,10 +105,17 @@ export async function getPremiumOfferings(): Promise<PlanPackage[]> {
   const result: PlanPackage[] = [];
 
   for (const pkg of current.availablePackages) {
-    const id = `${pkg.identifier} ${pkg.product?.identifier ?? ''}`.toLowerCase();
-    if (id.includes('monthly') || id.includes('month')) result.push({ id: 'monthly', package: pkg });
-    else if (id.includes('yearly') || id.includes('annual') || id.includes('year')) result.push({ id: 'yearly', package: pkg });
-    else if (id.includes('lifetime')) result.push({ id: 'lifetime', package: pkg });
+    if (pkg.packageType === PACKAGE_TYPE.MONTHLY) result.push({ id: 'monthly', package: pkg });
+    else if (pkg.packageType === PACKAGE_TYPE.ANNUAL) result.push({ id: 'yearly', package: pkg });
+    else if (pkg.packageType === PACKAGE_TYPE.LIFETIME) result.push({ id: 'lifetime', package: pkg });
+    else {
+      // Keep custom RevenueCat package identifiers compatible when they use
+      // descriptive names instead of the predefined $rc_* package types.
+      const id = `${pkg.identifier} ${pkg.product?.identifier ?? ''}`.toLowerCase();
+      if (id.includes('monthly') || id.includes('month')) result.push({ id: 'monthly', package: pkg });
+      else if (id.includes('yearly') || id.includes('annual') || id.includes('year')) result.push({ id: 'yearly', package: pkg });
+      else if (id.includes('lifetime')) result.push({ id: 'lifetime', package: pkg });
+    }
   }
 
   return result;
