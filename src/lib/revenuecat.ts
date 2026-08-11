@@ -1,4 +1,4 @@
-import { Purchases, PurchasesPackage, PurchasesOffering, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
+import { Purchases, PurchasesPackage, PurchasesOffering, LOG_LEVEL, PACKAGE_TYPE } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
 
 const REVENUECAT_PUBLIC_KEY = import.meta.env.VITE_REVENUECAT_PUBLIC_KEY as string | undefined;
@@ -19,6 +19,10 @@ let configured = false;
 
 export function isPurchasesReady(): boolean {
   return configured;
+}
+
+export function isNativePurchasesPlatform(): boolean {
+  return isNative();
 }
 
 /**
@@ -91,28 +95,30 @@ export async function logoutRevenueCat(): Promise<void> {
 export async function getPremiumOfferings(): Promise<PlanPackage[]> {
   if (!(await ready())) return [];
 
-  try {
-    const offerings = await Purchases.getOfferings();
-    const current = offerings.current as PurchasesOffering | null;
+  const offerings = await Purchases.getOfferings();
+  const current = offerings.current as PurchasesOffering | null;
 
-    if (!current?.availablePackages?.length) {
-      return [];
-    }
+  if (!current?.availablePackages?.length) {
+    return [];
+  }
 
-    const result: PlanPackage[] = [];
+  const result: PlanPackage[] = [];
 
-    for (const pkg of current.availablePackages) {
+  for (const pkg of current.availablePackages) {
+    if (pkg.packageType === PACKAGE_TYPE.MONTHLY) result.push({ id: 'monthly', package: pkg });
+    else if (pkg.packageType === PACKAGE_TYPE.ANNUAL) result.push({ id: 'yearly', package: pkg });
+    else if (pkg.packageType === PACKAGE_TYPE.LIFETIME) result.push({ id: 'lifetime', package: pkg });
+    else {
+      // Keep custom RevenueCat package identifiers compatible when they use
+      // descriptive names instead of the predefined $rc_* package types.
       const id = `${pkg.identifier} ${pkg.product?.identifier ?? ''}`.toLowerCase();
       if (id.includes('monthly') || id.includes('month')) result.push({ id: 'monthly', package: pkg });
       else if (id.includes('yearly') || id.includes('annual') || id.includes('year')) result.push({ id: 'yearly', package: pkg });
       else if (id.includes('lifetime')) result.push({ id: 'lifetime', package: pkg });
     }
-
-    return result;
-  } catch (err) {
-    console.warn('RevenueCat getOfferings failed', err);
-    return [];
   }
+
+  return result;
 }
 
 export async function purchasePlan(planPackage: PurchasesPackage): Promise<boolean> {

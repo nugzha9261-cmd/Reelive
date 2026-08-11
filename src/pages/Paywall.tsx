@@ -5,9 +5,10 @@ import { MobileLayout } from '@/components/layout/MobileLayout';
 import { usePremium } from '@/hooks/usePremium';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { PurchasesPackage } from '@revenuecat/purchases-capacitor';
+import { Button } from '@/components/ui/button';
 import {
   getPremiumOfferings,
+  isNativePurchasesPlatform,
   purchasePlan,
   restorePurchases,
   PlanPackage,
@@ -43,6 +44,8 @@ const Paywall: React.FC = () => {
   const [restoring, setRestoring] = React.useState(false);
   const [offerings, setOfferings] = React.useState<PlanPackage[]>([]);
   const [offeringsLoaded, setOfferingsLoaded] = React.useState(false);
+  const [offeringsError, setOfferingsError] = React.useState(false);
+  const isNative = isNativePurchasesPlatform();
 
   React.useEffect(() => {
     if (isPremium) {
@@ -54,11 +57,19 @@ const Paywall: React.FC = () => {
   React.useEffect(() => {
     let cancelled = false;
 
-    getPremiumOfferings().then((result) => {
-      if (cancelled) return;
-      setOfferings(result);
-      setOfferingsLoaded(true);
-    });
+    getPremiumOfferings()
+      .then((result) => {
+        if (cancelled) return;
+        setOfferings(result);
+        setOfferingsError(false);
+      })
+      .catch((error) => {
+        console.warn('Could not load RevenueCat offerings', error);
+        if (!cancelled) setOfferingsError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setOfferingsLoaded(true);
+      });
 
     return () => {
       cancelled = true;
@@ -77,8 +88,16 @@ const Paywall: React.FC = () => {
   const selectedPackage = offerings.find((o) => o.id === selected)?.package;
 
   const handlePurchase = async () => {
+    if (!isNative) {
+      toast.info('Subscriptions can be purchased in the REELIVE iPhone app.');
+      return;
+    }
+
     if (!selectedPlan || !selectedPackage) {
-      toast.error('This plan is not available right now.');
+      const message = offeringsError
+        ? 'Could not reach the App Store. Check your connection and try again.'
+        : 'No matching package was found. Check the current RevenueCat offering and its Apple product links.';
+      toast.error(message);
       return;
     }
 
@@ -120,13 +139,15 @@ const Paywall: React.FC = () => {
     <MobileLayout noPadding>
       <div className="relative min-h-screen bg-background">
         {/* Close */}
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={handleClose}
           className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-card/80 backdrop-blur flex items-center justify-center"
           aria-label="Close paywall"
         >
           <X className="w-5 h-5 text-foreground" />
-        </button>
+        </Button>
 
         {/* Hero */}
         <div className="pt-20 pb-8 px-6 text-center">
@@ -157,22 +178,20 @@ const Paywall: React.FC = () => {
         <div className="px-6 mb-6 space-y-3">
           {PLANS.map((plan) => {
             const found = offerings.find((o) => o.id === plan.id);
-            const available = offeringsLoaded ? !!found : true;
             const price = found?.package.product.priceString ?? plan.fallbackPrice;
             const period = found?.package.product.subscriptionPeriod
               ? found.package.product.subscriptionPeriod
               : plan.fallbackPeriod;
             return (
-              <button
+              <Button
+                variant="outline"
                 key={plan.id}
                 onClick={() => setSelected(plan.id)}
-                disabled={!available}
                 className={cn(
-                  'w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all',
-                  selected === plan.id && available
+                  'w-full h-auto p-4 rounded-2xl border-2 flex items-center justify-between transition-all',
+                  selected === plan.id
                     ? 'border-primary bg-primary/5'
                     : 'border-border bg-card',
-                  !available && 'opacity-50 cursor-not-allowed',
                 )}
               >
                 <div className="text-left">
@@ -187,36 +206,38 @@ const Paywall: React.FC = () => {
                   <p className="text-sm text-muted-foreground">{period}</p>
                 </div>
                 <p className="text-xl font-bold text-foreground">{price}</p>
-              </button>
+              </Button>
             );
           })}
         </div>
 
         {/* CTA */}
         <div className="px-6 pb-12">
-          <button
+          <Button
             onClick={handlePurchase}
-            disabled={loading || !selectedPackage}
+            disabled={loading || !offeringsLoaded}
             className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-lg active:scale-[0.98] transition-transform disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
             Continue
-          </button>
+          </Button>
           {fromSignup && (
-            <button
+            <Button
+              variant="ghost"
               onClick={handleClose}
               className="w-full mt-3 py-3 text-sm font-medium text-muted-foreground"
             >
               Maybe later — start with the free plan
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="ghost"
             onClick={handleRestore}
-            disabled={restoring}
+            disabled={restoring || !isNative}
             className="w-full mt-2 py-3 text-sm font-medium text-muted-foreground"
           >
             {restoring ? 'Restoring...' : 'Restore Purchases'}
-          </button>
+          </Button>
           <p className="text-xs text-center text-muted-foreground mt-3">
             Cancel anytime. Subscriptions are managed in App Store settings.
           </p>
