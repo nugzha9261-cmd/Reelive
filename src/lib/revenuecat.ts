@@ -21,6 +21,10 @@ export function isPurchasesReady(): boolean {
   return configured;
 }
 
+export function isNativePurchasesPlatform(): boolean {
+  return isNative();
+}
+
 /**
  * Configures the RevenueCat SDK exactly once. Every other call in this module
  * awaits this promise so we never hit "singleton instance not configured".
@@ -91,28 +95,23 @@ export async function logoutRevenueCat(): Promise<void> {
 export async function getPremiumOfferings(): Promise<PlanPackage[]> {
   if (!(await ready())) return [];
 
-  try {
-    const offerings = await Purchases.getOfferings();
-    const current = offerings.current as PurchasesOffering | null;
+  const offerings = await Purchases.getOfferings();
+  const current = offerings.current as PurchasesOffering | null;
 
-    if (!current?.availablePackages?.length) {
-      return [];
-    }
-
-    const result: PlanPackage[] = [];
-
-    for (const pkg of current.availablePackages) {
-      const id = `${pkg.identifier} ${pkg.product?.identifier ?? ''}`.toLowerCase();
-      if (id.includes('monthly') || id.includes('month')) result.push({ id: 'monthly', package: pkg });
-      else if (id.includes('yearly') || id.includes('annual') || id.includes('year')) result.push({ id: 'yearly', package: pkg });
-      else if (id.includes('lifetime')) result.push({ id: 'lifetime', package: pkg });
-    }
-
-    return result;
-  } catch (err) {
-    console.warn('RevenueCat getOfferings failed', err);
+  if (!current?.availablePackages?.length) {
     return [];
   }
+
+  const result: PlanPackage[] = [];
+
+  for (const pkg of current.availablePackages) {
+    const id = `${pkg.identifier} ${pkg.product?.identifier ?? ''}`.toLowerCase();
+    if (id.includes('monthly') || id.includes('month')) result.push({ id: 'monthly', package: pkg });
+    else if (id.includes('yearly') || id.includes('annual') || id.includes('year')) result.push({ id: 'yearly', package: pkg });
+    else if (id.includes('lifetime')) result.push({ id: 'lifetime', package: pkg });
+  }
+
+  return result;
 }
 
 export async function purchasePlan(planPackage: PurchasesPackage): Promise<boolean> {
