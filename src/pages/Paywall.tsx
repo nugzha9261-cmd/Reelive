@@ -155,6 +155,7 @@ const Paywall: React.FC = () => {
             <Crown className="w-10 h-10 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Go Premium</h1>
+          <p className="mb-2 text-sm font-semibold text-primary">Updated build • Aug 11</p>
           <p className="text-muted-foreground">Unlock the full REELIVE experience</p>
         </div>
 
