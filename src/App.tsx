@@ -63,6 +63,7 @@ const App = () => (
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/reelive" element={<ReeliveMarketing />} />
+              <Route path="/privacy" element={<Privacy />} />
               
               {/* Protected routes */}
               <Route path="/home" element={
