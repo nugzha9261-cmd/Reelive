@@ -25,6 +25,7 @@ const Paywall = lazy(() => import("./pages/Paywall"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Support = lazy(() => import("./pages/Support"));
+const Privacy = lazy(() => import("./pages/Privacy"));
 const ReeliveMarketing = lazy(() => import("./pages/ReeliveMarketing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/reelive" element={<ReeliveMarketing />} />
+              <Route path="/privacy" element={<Privacy />} />
               
               {/* Protected routes */}
               <Route path="/home" element={
