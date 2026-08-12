@@ -170,6 +170,7 @@ const Profile: React.FC = () => {
               <SettingItem
                 icon={Shield}
                 label="Privacy policy"
+                onClick={() => navigate('/privacy')}
               />
               <SettingItem
                 icon={HelpCircle}
