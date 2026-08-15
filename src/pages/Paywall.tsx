@@ -38,7 +38,7 @@ const Paywall: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const fromSignup = (location.state as { fromSignup?: boolean } | null)?.fromSignup === true;
-  const { isPremium } = usePremium();
+  const { isPremium, refresh: refreshPremium } = usePremium();
   const [selected, setSelected] = React.useState<string>('yearly');
   const [loading, setLoading] = React.useState(false);
   const [restoring, setRestoring] = React.useState(false);
@@ -103,7 +103,9 @@ const Paywall: React.FC = () => {
 
     setLoading(true);
     try {
-      await purchasePlan(selectedPackage);
+      const snapshot = await purchasePlan(selectedPackage);
+      console.log('[Paywall] purchase result', snapshot);
+      await refreshPremium();
       toast.success('Welcome to Premium!');
       navigate('/profile');
     } catch (err) {
@@ -122,6 +124,7 @@ const Paywall: React.FC = () => {
     setRestoring(true);
     try {
       const restored = await restorePurchases();
+      await refreshPremium();
       if (restored) {
         toast.success('Premium restored!');
         navigate('/profile');
