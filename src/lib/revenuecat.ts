@@ -260,7 +260,7 @@ export async function addEntitlementListener(
 ): Promise<() => void> {
   if (!(await ready())) return () => {};
 
-  const handler = ({ customerInfo }: { customerInfo: CustomerInfo }) => {
+  const handler = (customerInfo: CustomerInfo) => {
     cb(snapshotFromCustomerInfo(customerInfo, 'customerInfoUpdateListener'));
   };
 
