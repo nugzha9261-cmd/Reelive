@@ -6,8 +6,25 @@ import {
   HelpCircle, 
   LogOut,
   ChevronRight,
-  Crown
+  Crown,
+  FileText,
+  RotateCcw,
+  Trash2,
+  Loader2
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { restorePurchases, isNativePurchasesPlatform } from '@/lib/revenuecat';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { MobileLayout } from '@/components/layout/MobileLayout';
 import { AppHeader } from '@/components/layout/AppHeader';
@@ -65,7 +82,10 @@ const Profile: React.FC = () => {
     return localStorage.getItem('weeklyReminder') !== 'false';
   });
   const { user, signOut } = useAuth();
-  const { isPremium } = usePremium();
+  const { isPremium, refresh: refreshPremium } = usePremium();
+  const [restoring, setRestoring] = React.useState(false);
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
   const { journeyCount, compilationCount } = useFreeTierLimits();
 
   const handleDailyToggle = (checked: boolean) => {
@@ -82,6 +102,42 @@ const Profile: React.FC = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate('/login');
+  };
+
+  const handleRestore = async () => {
+    if (!isNativePurchasesPlatform()) {
+      toast.info('Purchases can be restored in the REELIVE iPhone app.');
+      return;
+    }
+    setRestoring(true);
+    try {
+      const restored = await restorePurchases();
+      await refreshPremium();
+      toast[restored ? 'success' : 'info'](
+        restored ? 'Premium restored!' : 'No previous purchases found.',
+      );
+    } catch {
+      toast.error('Could not restore purchases.');
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke('delete-account');
+      if (error) throw error;
+      toast.success('Your account and all data have been deleted.');
+      await signOut();
+      navigate('/login');
+    } catch (err) {
+      console.error('delete account failed', err);
+      toast.error('Could not delete your account. Please contact support.');
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
   };
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User';
@@ -173,6 +229,11 @@ const Profile: React.FC = () => {
                 onClick={() => navigate('/privacy')}
               />
               <SettingItem
+                icon={FileText}
+                label="Terms of Use"
+                onClick={() => navigate('/terms')}
+              />
+              <SettingItem
                 icon={HelpCircle}
                 label="Help & support"
                 onClick={() => navigate('/support')}
@@ -187,9 +248,23 @@ const Profile: React.FC = () => {
             </h2>
             <div className="bg-card rounded-2xl px-4">
               <SettingItem
+                icon={RotateCcw}
+                label="Restore purchases"
+                description="Recover a subscription bought earlier"
+                onClick={handleRestore}
+                trailing={restoring ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /> : undefined}
+              />
+              <SettingItem
                 icon={LogOut}
                 label="Sign out"
                 onClick={handleSignOut}
+                danger
+              />
+              <SettingItem
+                icon={Trash2}
+                label="Delete account"
+                description="Permanently remove your account and all clips"
+                onClick={() => setDeleteOpen(true)}
                 danger
               />
             </div>
@@ -197,6 +272,32 @@ const Profile: React.FC = () => {
         </div>
       </MobileLayout>
       <BottomNav />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes your account, all journeys, clips and reels. This cannot be
+              undone. Any active subscription must be cancelled separately in your Apple ID
+              settings.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteAccount();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting…' : 'Delete account'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
