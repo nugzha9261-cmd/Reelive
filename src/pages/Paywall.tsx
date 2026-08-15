@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Crown, Check, X, Sparkles, Infinity as InfinityIcon, Music, Loader2 } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Crown, Check, X, Sparkles, Infinity as InfinityIcon, Music, Loader2, AlertCircle } from 'lucide-react';
 import { MobileLayout } from '@/components/layout/MobileLayout';
 import { usePremium } from '@/hooks/usePremium';
 import { cn } from '@/lib/utils';
@@ -25,21 +25,50 @@ const FEATURES = [
 const PLANS: {
   id: PlanType;
   label: string;
-  fallbackPrice: string;
-  fallbackPeriod: string;
+  /** Human description of the billing term, shown when StoreKit has no period. */
+  termLabel: string;
+  recurring: boolean;
   badge: string | null;
 }[] = [
-  { id: 'monthly', label: 'Monthly', fallbackPrice: '$4.99', fallbackPeriod: '/month', badge: null },
-  { id: 'yearly', label: 'Yearly', fallbackPrice: '$39.99', fallbackPeriod: '/year', badge: 'Save 33%' },
-  { id: 'lifetime', label: 'Lifetime', fallbackPrice: '$79.99', fallbackPeriod: 'one-time', badge: 'Best value' },
+  {
+    id: 'monthly',
+    label: 'REELIVE Premium Monthly',
+    termLabel: '1 month · auto-renewing subscription',
+    recurring: true,
+    badge: null,
+  },
+  {
+    id: 'yearly',
+    label: 'REELIVE Premium Yearly',
+    termLabel: '12 months · auto-renewing subscription',
+    recurring: true,
+    badge: 'Best value',
+  },
+  {
+    id: 'lifetime',
+    label: 'REELIVE Premium Lifetime',
+    termLabel: 'One-time purchase · does not renew',
+    recurring: false,
+    badge: 'One-time',
+  },
 ];
+
+/** Turns an ISO-8601 StoreKit period (P1M, P1Y, P1W) into readable text. */
+function formatPeriod(period?: string | null): string | null {
+  if (!period) return null;
+  const match = /^P(\d+)([DWMY])$/.exec(period.trim().toUpperCase());
+  if (!match) return null;
+  const count = Number(match[1]);
+  const unit = { D: 'day', W: 'week', M: 'month', Y: 'year' }[match[2]] as string;
+  return count === 1 ? `every ${unit}` : `every ${count} ${unit}s`;
+}
 
 const Paywall: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const fromSignup = (location.state as { fromSignup?: boolean } | null)?.fromSignup === true;
   const { isPremium, refresh: refreshPremium } = usePremium();
-  const [selected, setSelected] = React.useState<string>('yearly');
+  const [selected, setSelected] = React.useState<PlanType>('yearly');
   const [loading, setLoading] = React.useState(false);
   const [restoring, setRestoring] = React.useState(false);
   const [offerings, setOfferings] = React.useState<PlanPackage[]>([]);
@@ -86,6 +115,8 @@ const Paywall: React.FC = () => {
 
   const selectedPlan = PLANS.find((p) => p.id === selected);
   const selectedPackage = offerings.find((o) => o.id === selected)?.package;
+  const pricesUnavailable = isNative && offeringsLoaded && offerings.length === 0;
+  const canPurchase = isNative && !!selectedPackage;
 
   const handlePurchase = async () => {
     if (!isNative) {
@@ -94,10 +125,7 @@ const Paywall: React.FC = () => {
     }
 
     if (!selectedPlan || !selectedPackage) {
-      const message = offeringsError
-        ? 'Could not reach the App Store. Check your connection and try again.'
-        : 'No matching package was found. Check the current RevenueCat offering and its Apple product links.';
-      toast.error(message);
+      toast.error('Prices are still loading from the App Store. Please try again in a moment.');
       return;
     }
 
@@ -158,7 +186,7 @@ const Paywall: React.FC = () => {
             <Crown className="w-10 h-10 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Go Premium</h1>
-          
+
           <p className="text-muted-foreground">Unlock the full REELIVE experience</p>
         </div>
 
@@ -180,46 +208,78 @@ const Paywall: React.FC = () => {
 
         {/* Plans */}
         <div className="px-6 mb-6 space-y-3">
-          {PLANS.map((plan) => {
-            const found = offerings.find((o) => o.id === plan.id);
-            const price = found?.package.product.priceString ?? plan.fallbackPrice;
-            const period = found?.package.product.subscriptionPeriod
-              ? found.package.product.subscriptionPeriod
-              : plan.fallbackPeriod;
-            return (
-              <Button
-                variant="outline"
-                key={plan.id}
-                onClick={() => setSelected(plan.id)}
-                className={cn(
-                  'w-full h-auto p-4 rounded-2xl border-2 flex items-center justify-between transition-all',
-                  selected === plan.id
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-card',
-                )}
-              >
-                <div className="text-left">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-foreground">{plan.label}</p>
-                    {plan.badge && (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary text-primary-foreground">
-                        {plan.badge}
-                      </span>
+          {!offeringsLoaded && (
+            <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Loading App Store prices…
+            </div>
+          )}
+
+          {offeringsLoaded && (pricesUnavailable || offeringsError) && (
+            <div className="flex items-start gap-3 p-4 rounded-2xl bg-card border border-border">
+              <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground">
+                Pricing is temporarily unavailable from the App Store. Check your connection and
+                try again in a moment.
+              </p>
+            </div>
+          )}
+
+          {offeringsLoaded &&
+            PLANS.map((plan) => {
+              const found = offerings.find((o) => o.id === plan.id);
+              if (isNative && !found) return null;
+
+              const price = found?.package.product.priceString ?? null;
+              const period =
+                formatPeriod(found?.package.product.subscriptionPeriod) ??
+                (plan.recurring ? null : 'one-time');
+
+              return (
+                <Button
+                  variant="outline"
+                  key={plan.id}
+                  onClick={() => setSelected(plan.id)}
+                  className={cn(
+                    'w-full h-auto p-4 rounded-2xl border-2 flex items-center justify-between transition-all',
+                    selected === plan.id ? 'border-primary bg-primary/5' : 'border-border bg-card',
+                  )}
+                >
+                  <div className="text-left">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-foreground whitespace-normal">{plan.label}</p>
+                      {plan.badge && (
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary text-primary-foreground">
+                          {plan.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground whitespace-normal">
+                      {plan.termLabel}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0 pl-3">
+                    {price ? (
+                      <>
+                        <p className="text-xl font-bold text-foreground">{price}</p>
+                        {period && <p className="text-xs text-muted-foreground">{period}</p>}
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground whitespace-normal max-w-[7rem]">
+                        Price shown in the iPhone app
+                      </p>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{period}</p>
-                </div>
-                <p className="text-xl font-bold text-foreground">{price}</p>
-              </Button>
-            );
-          })}
+                </Button>
+              );
+            })}
         </div>
 
         {/* CTA */}
         <div className="px-6 pb-12">
           <Button
             onClick={handlePurchase}
-            disabled={loading || !offeringsLoaded}
+            disabled={loading || !offeringsLoaded || (isNative && !canPurchase)}
             className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-lg active:scale-[0.98] transition-transform disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading && <Loader2 className="w-5 h-5 animate-spin" />}
@@ -242,9 +302,28 @@ const Paywall: React.FC = () => {
           >
             {restoring ? 'Restoring...' : 'Restore Purchases'}
           </Button>
-          <p className="text-xs text-center text-muted-foreground mt-3">
-            Cancel anytime. Subscriptions are managed in App Store settings.
-          </p>
+
+          {/* Required subscription disclosures (App Store Guideline 3.1.2) */}
+          <div className="mt-5 space-y-2">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              REELIVE Premium Monthly and Yearly are auto-renewing subscriptions. Payment is
+              charged to your Apple ID at confirmation of purchase. Your subscription renews
+              automatically for the same period and price unless it is cancelled at least 24 hours
+              before the end of the current period. Your account is charged for renewal within 24
+              hours prior to the end of the current period. You can manage or cancel your
+              subscription in your Apple ID Account Settings. REELIVE Premium Lifetime is a
+              one-time purchase and does not renew.
+            </p>
+            <p className="text-xs text-center text-muted-foreground">
+              <Link to="/terms" className="underline text-primary">
+                Terms of Use (EULA)
+              </Link>
+              <span className="mx-2">·</span>
+              <Link to="/privacy" className="underline text-primary">
+                Privacy Policy
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </MobileLayout>
