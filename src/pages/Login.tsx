@@ -46,6 +46,9 @@ const Login: React.FC = () => {
         variant: 'destructive',
       });
       setAppleLoading(false);
+    } else {
+      setAppleLoading(false);
+      navigate('/home');
     }
   };
 
