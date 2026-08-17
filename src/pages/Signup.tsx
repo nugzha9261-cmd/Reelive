@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Film, Info, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { lovable } from '@/integrations/lovable';
+import { signInWithApple } from '@/lib/apple-auth';
 
 const Signup: React.FC = () => {
   const [displayName, setDisplayName] = useState('');
@@ -64,9 +64,7 @@ const Signup: React.FC = () => {
 
   const handleAppleSignIn = async () => {
     setAppleLoading(true);
-    const { error } = await lovable.auth.signInWithOAuth('apple', {
-      redirect_uri: window.location.origin,
-    });
+    const { error } = await signInWithApple();
 
     if (error) {
       toast({

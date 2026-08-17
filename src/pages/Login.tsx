@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Film, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { lovable } from '@/integrations/lovable';
+import { signInWithApple } from '@/lib/apple-auth';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -37,9 +37,7 @@ const Login: React.FC = () => {
 
   const handleAppleSignIn = async () => {
     setAppleLoading(true);
-    const { error } = await lovable.auth.signInWithOAuth('apple', {
-      redirect_uri: window.location.origin,
-    });
+    const { error } = await signInWithApple();
 
     if (error) {
       toast({
