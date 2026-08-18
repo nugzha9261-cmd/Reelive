@@ -236,8 +236,8 @@ export async function purchasePlan(planPackage: PurchasesPackage): Promise<Entit
 
   const result = await withTimeout(
     Purchases.purchasePackage({ aPackage: planPackage }),
-    90000,
-    'Opening the App Store purchase',
+    30000,
+    'The App Store did not open the purchase',
   );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyResult = result as any;

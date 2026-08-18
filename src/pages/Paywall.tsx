@@ -74,7 +74,12 @@ const Paywall: React.FC = () => {
   const [offerings, setOfferings] = React.useState<PlanPackage[]>([]);
   const [offeringsLoaded, setOfferingsLoaded] = React.useState(false);
   const [offeringsError, setOfferingsError] = React.useState(false);
+  const purchaseWatchdog = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const isNative = isNativePurchasesPlatform();
+
+  React.useEffect(() => () => {
+    if (purchaseWatchdog.current) clearTimeout(purchaseWatchdog.current);
+  }, []);
 
   React.useEffect(() => {
     if (isPremium) {
@@ -145,6 +150,11 @@ const Paywall: React.FC = () => {
     }
 
     setLoading(true);
+    purchaseWatchdog.current = setTimeout(() => {
+      purchaseWatchdog.current = null;
+      setLoading(false);
+      toast.error('The App Store did not respond. Close and reopen REELIVE, then try again or restore purchases.');
+    }, 32000);
     try {
       const snapshot = await purchasePlan(selectedPackage);
       console.log('[Paywall] purchase result', snapshot);
@@ -159,6 +169,10 @@ const Paywall: React.FC = () => {
         toast.error(error.message || 'Purchase failed. Please try again.');
       }
     } finally {
+      if (purchaseWatchdog.current) {
+        clearTimeout(purchaseWatchdog.current);
+        purchaseWatchdog.current = null;
+      }
       setLoading(false);
     }
   };
