@@ -83,8 +83,11 @@ const Paywall: React.FC = () => {
     }
   }, [isPremium, navigate]);
 
+  const [reloadKey, setReloadKey] = React.useState(0);
+
   React.useEffect(() => {
     let cancelled = false;
+    setOfferingsLoaded(false);
 
     getPremiumOfferings()
       .then((result) => {
@@ -103,7 +106,7 @@ const Paywall: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   const handleClose = () => {
     if (fromSignup) {
