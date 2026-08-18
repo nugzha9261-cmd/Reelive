@@ -219,12 +219,17 @@ const Paywall: React.FC = () => {
           )}
 
           {offeringsLoaded && (pricesUnavailable || offeringsError) && (
-            <div className="flex items-start gap-3 p-4 rounded-2xl bg-card border border-border">
-              <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-muted-foreground">
-                Pricing is temporarily unavailable from the App Store. Check your connection and
-                try again in a moment.
-              </p>
+            <div className="p-4 rounded-2xl bg-card border border-border space-y-3">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-muted-foreground">
+                  Pricing is temporarily unavailable from the App Store. Check your connection and
+                  try again in a moment.
+                </p>
+              </div>
+              <Button variant="outline" className="w-full rounded-xl" onClick={() => setReloadKey((k) => k + 1)}>
+                Try again
+              </Button>
             </div>
           )}
 
