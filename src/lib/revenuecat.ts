@@ -217,7 +217,7 @@ export function snapshotFromCustomerInfo(customerInfo: CustomerInfo, source: str
 }
 
 export async function purchasePlan(planPackage: PurchasesPackage): Promise<EntitlementSnapshot> {
-  if (!(await ready())) {
+  if (!(await withTimeout(ready(), 12000, 'Connecting to the App Store'))) {
     throw new Error('Purchases are not connected in this app build. Please install the latest build and try again.');
   }
 
