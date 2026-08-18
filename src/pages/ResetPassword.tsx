@@ -62,9 +62,8 @@ const ResetPassword: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6 flex-1">
           <div className="space-y-2">
             <Label htmlFor="password">New password</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -75,9 +74,8 @@ const ResetPassword: React.FC = () => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm">Confirm password</Label>
-            <Input
+            <PasswordInput
               id="confirm"
-              type="password"
               placeholder="••••••••"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
