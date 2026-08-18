@@ -118,10 +118,16 @@ export async function getPremiumOfferings(): Promise<PlanPackage[]> {
   if (!isReady) return [];
 
   const offerings = await withTimeout(Purchases.getOfferings(), 15000, 'Loading App Store prices');
-  const current = offerings.current as PurchasesOffering | null;
-
+  const fallbackOffering = Object.values(offerings.all ?? {}).find(
+    (offering) => offering.availablePackages?.length,
+  );
+  const current = (offerings.current ?? fallbackOffering ?? null) as PurchasesOffering | null;
 
   if (!current?.availablePackages?.length) {
+    console.warn('[RC] no purchasable packages returned', {
+      hasCurrentOffering: !!offerings.current,
+      offeringIds: Object.keys(offerings.all ?? {}),
+    });
     return [];
   }
 
@@ -228,7 +234,11 @@ export async function purchasePlan(planPackage: PurchasesPackage): Promise<Entit
     price: planPackage.product?.priceString,
   });
 
-  const result = await Purchases.purchasePackage({ aPackage: planPackage });
+  const result = await withTimeout(
+    Purchases.purchasePackage({ aPackage: planPackage }),
+    90000,
+    'Opening the App Store purchase',
+  );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const anyResult = result as any;
   console.log('[RC] purchase completed', {
