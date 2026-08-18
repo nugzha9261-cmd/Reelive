@@ -169,9 +169,8 @@ const Signup: React.FC = () => {
             </TooltipProvider>
           </div>
 
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -182,9 +181,8 @@ const Signup: React.FC = () => {
 
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm password</Label>
-          <Input
+          <PasswordInput
             id="confirmPassword"
-            type="password"
             placeholder="••••••••"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
