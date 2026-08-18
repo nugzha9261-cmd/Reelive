@@ -88,6 +88,7 @@ const Paywall: React.FC = () => {
   React.useEffect(() => {
     let cancelled = false;
     setOfferingsLoaded(false);
+    setOfferingsError(false);
 
     // Hard watchdog: never let the paywall spin forever, whatever the SDK does.
     const watchdog = setTimeout(() => {
@@ -99,11 +100,13 @@ const Paywall: React.FC = () => {
     getPremiumOfferings()
       .then((result) => {
         if (cancelled) return;
+        clearTimeout(watchdog);
         setOfferings(result);
-        setOfferingsError(false);
+        setOfferingsError(result.length === 0);
       })
       .catch((error) => {
         console.warn('Could not load RevenueCat offerings', error);
+        clearTimeout(watchdog);
         if (!cancelled) setOfferingsError(true);
       })
       .finally(() => {
@@ -258,11 +261,11 @@ const Paywall: React.FC = () => {
                   key={plan.id}
                   onClick={() => setSelected(plan.id)}
                   className={cn(
-                    'w-full h-auto p-4 rounded-2xl border-2 flex items-center justify-between transition-all',
-                    'hover:bg-card active:bg-card focus-visible:bg-card',
+                    'w-full h-auto p-4 rounded-2xl border-2 flex items-center justify-between transition-colors',
+                    'bg-card hover:bg-card active:bg-card focus:bg-card focus-visible:bg-card touch-manipulation [-webkit-tap-highlight-color:transparent]',
                     selected === plan.id
-                      ? 'border-primary bg-card hover:border-primary'
-                      : 'border-border bg-card hover:border-primary/40',
+                      ? 'border-primary hover:border-primary'
+                      : 'border-border hover:border-primary/40',
                   )}
 
                 >
