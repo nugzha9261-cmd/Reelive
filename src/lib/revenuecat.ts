@@ -92,11 +92,34 @@ export async function logoutRevenueCat(): Promise<void> {
   }
 }
 
-export async function getPremiumOfferings(): Promise<PlanPackage[]> {
-  if (!(await ready())) return [];
+/** Rejects if a native bridge call never settles (offline / StoreKit stalls). */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out. Please check your connection and try again.`)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
 
-  const offerings = await Purchases.getOfferings();
+export async function getPremiumOfferings(): Promise<PlanPackage[]> {
+  const isReady = await withTimeout(ready(), 12000, 'Connecting to the App Store').catch((err) => {
+    console.warn('[RC] configure timed out', err);
+    configurePromise = null;
+    throw err;
+  });
+  if (!isReady) return [];
+
+  const offerings = await withTimeout(Purchases.getOfferings(), 15000, 'Loading App Store prices');
   const current = offerings.current as PurchasesOffering | null;
+
 
   if (!current?.availablePackages?.length) {
     return [];
