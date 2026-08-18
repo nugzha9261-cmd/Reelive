@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Film, Info, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithApple } from '@/lib/apple-auth';
 
 const Signup: React.FC = () => {
   const [displayName, setDisplayName] = useState('');
@@ -16,7 +15,6 @@ const Signup: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
   const { signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -60,23 +58,6 @@ const Signup: React.FC = () => {
         description: 'Welcome to LifeShots. Start capturing your journey.',
       });
       navigate('/paywall', { state: { fromSignup: true } });
-    }
-  };
-
-  const handleAppleSignIn = async () => {
-    setAppleLoading(true);
-    const { error } = await signInWithApple();
-
-    if (error) {
-      toast({
-        title: 'Apple Sign-In failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-      setAppleLoading(false);
-    } else {
-      setAppleLoading(false);
-      navigate('/home');
     }
   };
 

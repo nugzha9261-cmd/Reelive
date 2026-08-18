@@ -7,13 +7,11 @@ import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Film, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithApple } from '@/lib/apple-auth';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [appleLoading, setAppleLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -32,23 +30,6 @@ const Login: React.FC = () => {
       });
       setLoading(false);
     } else {
-      navigate('/home');
-    }
-  };
-
-  const handleAppleSignIn = async () => {
-    setAppleLoading(true);
-    const { error } = await signInWithApple();
-
-    if (error) {
-      toast({
-        title: 'Apple Sign-In failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-      setAppleLoading(false);
-    } else {
-      setAppleLoading(false);
       navigate('/home');
     }
   };
