@@ -259,8 +259,12 @@ const Paywall: React.FC = () => {
                   onClick={() => setSelected(plan.id)}
                   className={cn(
                     'w-full h-auto p-4 rounded-2xl border-2 flex items-center justify-between transition-all',
-                    selected === plan.id ? 'border-primary bg-primary/5' : 'border-border bg-card',
+                    'hover:bg-card active:bg-card focus-visible:bg-card',
+                    selected === plan.id
+                      ? 'border-primary bg-card hover:border-primary'
+                      : 'border-border bg-card hover:border-primary/40',
                   )}
+
                 >
                   <div className="text-left">
                     <div className="flex items-center gap-2 flex-wrap">
