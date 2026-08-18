@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IOSButton } from '@/components/ui/ios-button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Film, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -62,9 +63,8 @@ const ResetPassword: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6 flex-1">
           <div className="space-y-2">
             <Label htmlFor="password">New password</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -75,9 +75,8 @@ const ResetPassword: React.FC = () => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm">Confirm password</Label>
-            <Input
+            <PasswordInput
               id="confirm"
-              type="password"
               placeholder="••••••••"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
