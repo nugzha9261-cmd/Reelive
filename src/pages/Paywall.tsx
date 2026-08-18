@@ -89,6 +89,13 @@ const Paywall: React.FC = () => {
     let cancelled = false;
     setOfferingsLoaded(false);
 
+    // Hard watchdog: never let the paywall spin forever, whatever the SDK does.
+    const watchdog = setTimeout(() => {
+      if (cancelled) return;
+      setOfferingsError(true);
+      setOfferingsLoaded(true);
+    }, 10000);
+
     getPremiumOfferings()
       .then((result) => {
         if (cancelled) return;
@@ -105,8 +112,10 @@ const Paywall: React.FC = () => {
 
     return () => {
       cancelled = true;
+      clearTimeout(watchdog);
     };
   }, [reloadKey]);
+
 
   const handleClose = () => {
     if (fromSignup) {
@@ -250,8 +259,12 @@ const Paywall: React.FC = () => {
                   onClick={() => setSelected(plan.id)}
                   className={cn(
                     'w-full h-auto p-4 rounded-2xl border-2 flex items-center justify-between transition-all',
-                    selected === plan.id ? 'border-primary bg-primary/5' : 'border-border bg-card',
+                    'hover:bg-card active:bg-card focus-visible:bg-card',
+                    selected === plan.id
+                      ? 'border-primary bg-card hover:border-primary'
+                      : 'border-border bg-card hover:border-primary/40',
                   )}
+
                 >
                   <div className="text-left">
                     <div className="flex items-center gap-2 flex-wrap">
