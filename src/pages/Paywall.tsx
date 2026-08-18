@@ -89,6 +89,13 @@ const Paywall: React.FC = () => {
     let cancelled = false;
     setOfferingsLoaded(false);
 
+    // Hard watchdog: never let the paywall spin forever, whatever the SDK does.
+    const watchdog = setTimeout(() => {
+      if (cancelled) return;
+      setOfferingsError(true);
+      setOfferingsLoaded(true);
+    }, 10000);
+
     getPremiumOfferings()
       .then((result) => {
         if (cancelled) return;
@@ -105,8 +112,10 @@ const Paywall: React.FC = () => {
 
     return () => {
       cancelled = true;
+      clearTimeout(watchdog);
     };
   }, [reloadKey]);
+
 
   const handleClose = () => {
     if (fromSignup) {
