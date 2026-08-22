@@ -52,12 +52,12 @@ const PageLoader = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <DeepLinkHandler />
-            <NotificationScheduler />
+      <NotificationScheduler />
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <DeepLinkHandler />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public routes */}
