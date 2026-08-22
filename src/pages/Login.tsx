@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { IOSButton } from '@/components/ui/ios-button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,8 @@ const Login: React.FC = () => {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+  const justConfirmed = searchParams.get('confirmed') === '1';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +47,12 @@ const Login: React.FC = () => {
         <p className="text-muted-foreground mt-2">Sign in to continue your journey</p>
       </div>
 
+      {justConfirmed && (
+        <div className="mb-6 rounded-2xl bg-primary/10 border border-primary/20 px-4 py-3 text-center">
+          <p className="text-sm text-foreground font-medium">Email confirmed</p>
+          <p className="text-xs text-muted-foreground mt-1">Sign in to start capturing your journey.</p>
+        </div>
+      )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6 flex-1">

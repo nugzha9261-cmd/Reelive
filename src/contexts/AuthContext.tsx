@@ -12,6 +12,11 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
+// Emails must point at a real https URL: on native the origin is capacitor://localhost
+const AUTH_REDIRECT_BASE = window.location.origin.startsWith('http')
+  ? window.location.origin
+  : 'https://lifeshots.app';
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -69,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${AUTH_REDIRECT_BASE}/auth/confirmed`,
         data: {
           display_name: displayName || email,
         },
