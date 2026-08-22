@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationScheduler } from "@/components/notifications/NotificationScheduler";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import DeepLinkHandler from "@/components/DeepLinkHandler";
 import { Loader2 } from "lucide-react";
 
 // Lazy load all pages
@@ -28,6 +29,7 @@ const Support = lazy(() => import("./pages/Support"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const ReeliveMarketing = lazy(() => import("./pages/ReeliveMarketing"));
+const EmailConfirmed = lazy(() => import("./pages/EmailConfirmed"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -50,7 +52,8 @@ const PageLoader = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <NotificationScheduler />
+      <DeepLinkHandler />
+            <NotificationScheduler />
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -63,6 +66,7 @@ const App = () => (
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/confirmed" element={<EmailConfirmed />} />
               <Route path="/reelive" element={<ReeliveMarketing />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
